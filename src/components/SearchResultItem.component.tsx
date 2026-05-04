@@ -68,7 +68,7 @@ class SearchResultItemComponent extends Component<
     );
   }
 
-  getCover = (cover_i, size = 'M') =>
+  getCover = (cover_i: number, size: 'S' | 'M' | 'L' = 'M') =>
     `https://covers.openlibrary.org/b/id/${cover_i}-${size}.jpg`;
 
   render() {

@@ -10,12 +10,14 @@ import SearchResultsComponent from './SearchResults.component';
 type SearchPageState = {
   searchResults: SearchResultsType;
   isLoading: boolean;
+  errorMessage: string | null;
 };
 
 class SearchPage extends Component {
   state: SearchPageState = {
     searchResults: {} as SearchResultsType,
     isLoading: false,
+    errorMessage: null,
   };
 
   componentDidMount(): void {
@@ -38,15 +40,41 @@ class SearchPage extends Component {
   handleSearch = async (query: string) => {
     if (!query) return;
     this.setQueryToLocalStorage(query);
-    this.setState(() => ({ isLoading: true }));
-    const searchResults = await searchBooks(query);
-    this.setState(() => ({ searchResults, isLoading: false }));
+    this.setState(() => ({ isLoading: true, errorMessage: null }));
+
+    try {
+      const searchResults = await searchBooks(query);
+      this.setState(() => ({ searchResults, isLoading: false }));
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Search request failed. Please try again.';
+      this.setState(() => ({
+        errorMessage: message,
+        isLoading: false,
+        searchResults: { numFound: 0, start: 0, docs: [] },
+      }));
+    }
   };
 
   handleDefaultBooks = async () => {
-    this.setState(() => ({ isLoading: true }));
-    const searchResults = await getTrendingWeeklyBooks();
-    this.setState(() => ({ searchResults, isLoading: false }));
+    this.setState(() => ({ isLoading: true, errorMessage: null }));
+
+    try {
+      const searchResults = await getTrendingWeeklyBooks();
+      this.setState(() => ({ searchResults, isLoading: false }));
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Cannot load default books. Please try again.';
+      this.setState(() => ({
+        errorMessage: message,
+        isLoading: false,
+        searchResults: { numFound: 0, start: 0, docs: [] },
+      }));
+    }
   };
 
   renderLoader() {
@@ -63,13 +91,21 @@ class SearchPage extends Component {
   }
 
   render() {
-    const { isLoading, searchResults } = this.state;
+    const { isLoading, searchResults, errorMessage } = this.state;
     const query = this.getQueryFromLocalStorage();
 
     return (
       <section className="bg-flannel mx-auto flex min-h-dvh max-w-5xl flex-col gap-6 px-4 py-16">
         <PageTitleComponent title="Book search!" />
         <SearchFormComponent query={query} handleSearch={this.handleSearch} />
+        {errorMessage ? (
+          <div
+            role="alert"
+            className="rounded-md border border-red-300 bg-red-50 p-4 text-red-900"
+          >
+            {errorMessage}
+          </div>
+        ) : null}
         <ErrorBoundaryComponent>
           {isLoading ? (
             this.renderLoader()

@@ -14,11 +14,24 @@ export const searchBooks = async (
   limit: number = 10,
   offset: number = 0
 ) => {
-  const response = await fetch(
-    `${BASE_URL}search.json?q=${query}&limit=${limit}&offset=${offset}`,
-    options
-  );
-  return response.json();
+  try {
+    const response = await fetch(
+      `${BASE_URL}search.json?q=${query}&limit=${limit}&offset=${offset}`,
+      options
+    );
+
+    if (!response.ok) {
+      const responseJson = await response.json();
+      throw new Error(responseJson.detail[0].msg);
+    }
+
+    return response.json();
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Search request failed. Please try again.');
+  }
 };
 
 type TrendingWeeklyResponse = {

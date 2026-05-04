@@ -1,8 +1,8 @@
 import { Component } from 'react';
 
 type SearchFormComponentProps = {
-  handleSearch: (query: FormDataEntryValue | null) => void;
-  query: string;
+  handleSearch: (query: string) => void;
+  query: string | null;
 };
 
 class SearchFormComponent extends Component<SearchFormComponentProps> {
@@ -13,8 +13,7 @@ class SearchFormComponent extends Component<SearchFormComponentProps> {
 
   search(formData: FormData): void {
     const query = formData.get('query');
-
-    this.props.handleSearch(query);
+    this.props.handleSearch(typeof query === 'string' ? query : '');
   }
 
   render() {
@@ -27,8 +26,7 @@ class SearchFormComponent extends Component<SearchFormComponentProps> {
           placeholder="Search for a book"
           className="bg-white rounded-md p-2"
           name="query"
-          defaultValue={query}
-          minLength={3}
+          defaultValue={query ?? ''}
           maxLength={100}
         />
         <button
