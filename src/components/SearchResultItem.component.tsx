@@ -1,9 +1,27 @@
 import { Component } from 'react';
 import type { SearchResultItemType } from '../types/searchResultItem.type';
 
-class SearchResultItemComponent extends Component<{
+type SearchResultItemProps = {
   searchResultItem: SearchResultItemType;
-}> {
+};
+
+type SearchResultItemState = {
+  coverLoadFailed: boolean;
+};
+
+class SearchResultItemComponent extends Component<
+  SearchResultItemProps,
+  SearchResultItemState
+> {
+  state: SearchResultItemState = { coverLoadFailed: false };
+
+  componentDidUpdate(prevProps: SearchResultItemProps) {
+    if (
+      prevProps.searchResultItem.cover_i !== this.props.searchResultItem.cover_i
+    ) {
+      this.setState({ coverLoadFailed: false });
+    }
+  }
   renderTitle() {
     const { title } = this.props.searchResultItem;
     return <p className="font-medium">{title}</p>;
@@ -25,12 +43,27 @@ class SearchResultItemComponent extends Component<{
 
   renderCover() {
     const { cover_i } = this.props.searchResultItem;
-    const cover = cover_i ? this.getCover(cover_i) : '📖';
+    const coverUrl = cover_i ? this.getCover(cover_i) : null;
+    const { coverLoadFailed } = this.state;
+
+    const sizeClass = 'w-[80px] h-[120px] rounded shrink-0';
+
+    if (!coverUrl || coverLoadFailed) {
+      return (
+        <div
+          className={`${sizeClass} flex items-center justify-center bg-neutral-100 text-4xl`}
+        >
+          📖
+        </div>
+      );
+    }
+
     return (
       <img
-        src={cover}
+        src={coverUrl}
         alt="Book cover"
-        className="w-[80px] h-[120px] object-cover rounded shrink-0"
+        className={`${sizeClass} object-cover bg-neutral-100`}
+        onError={() => this.setState({ coverLoadFailed: true })}
       />
     );
   }
@@ -46,8 +79,8 @@ class SearchResultItemComponent extends Component<{
           items-center gap-4"
       >
         <div className="grid grid-cols-[80px_1fr] gap-2">
-          <div className="">{this.renderCover()}</div>
-          <div className="">
+          <div>{this.renderCover()}</div>
+          <div>
             {this.renderTitle()}
             {this.renderAuthorName()}
             {this.renderFirstPublishYear()}
