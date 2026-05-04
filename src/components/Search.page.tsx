@@ -1,6 +1,7 @@
 import { Component } from 'react';
 import { getTrendingWeeklyBooks, searchBooks } from '../api/books.api';
 import type { SearchResultsType } from '../types/searchResults.type';
+import ErrorBoundaryComponent from './ErrorBoundary.component';
 import ErrorButtonComponent from './ErrorButton.component';
 import PageTitleComponent from './PageTitle.component';
 import SearchFormComponent from './SearchForm.component';
@@ -69,12 +70,14 @@ class SearchPage extends Component {
       <section className="bg-flannel mx-auto flex min-h-dvh max-w-5xl flex-col gap-6 px-4 py-16">
         <PageTitleComponent title="Book search!" />
         <SearchFormComponent query={query} handleSearch={this.handleSearch} />
-        <ErrorButtonComponent />
-        {isLoading ? (
-          this.renderLoader()
-        ) : (
-          <SearchResultsComponent searchResults={searchResults} />
-        )}
+        <ErrorBoundaryComponent>
+          {isLoading ? (
+            this.renderLoader()
+          ) : (
+            <SearchResultsComponent searchResults={searchResults} />
+          )}
+          <ErrorButtonComponent />
+        </ErrorBoundaryComponent>
       </section>
     );
   }
