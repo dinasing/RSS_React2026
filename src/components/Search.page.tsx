@@ -1,6 +1,7 @@
 import { Component } from 'react';
 import { getTrendingWeeklyBooks, searchBooks } from '../api/books.api';
 import type { SearchResultsType } from '../types/searchResults.type';
+import ErrorButtonComponent from './ErrorButton.component';
 import PageTitleComponent from './PageTitle.component';
 import SearchFormComponent from './SearchForm.component';
 import SearchResultsComponent from './SearchResults.component';
@@ -8,22 +9,34 @@ import SearchResultsComponent from './SearchResults.component';
 type SearchPageState = {
   searchResults: SearchResultsType;
   isLoading: boolean;
-  query: string;
 };
 
 class SearchPage extends Component {
   state: SearchPageState = {
     searchResults: {} as SearchResultsType,
     isLoading: false,
-    query: '',
   };
 
   componentDidMount(): void {
-    this.handleDefaultBooks();
+    const query = this.getQueryFromLocalStorage();
+    if (query) {
+      this.handleSearch(query);
+    } else {
+      this.handleDefaultBooks();
+    }
   }
+
+  getQueryFromLocalStorage = () => {
+    return localStorage.getItem('query');
+  };
+
+  setQueryToLocalStorage = (query: string) => {
+    localStorage.setItem('query', query);
+  };
 
   handleSearch = async (query: string) => {
     if (!query) return;
+    this.setQueryToLocalStorage(query);
     this.setState(() => ({ isLoading: true }));
     const searchResults = await searchBooks(query);
     this.setState(() => ({ searchResults, isLoading: false }));
@@ -50,10 +63,13 @@ class SearchPage extends Component {
 
   render() {
     const { isLoading, searchResults } = this.state;
+    const query = this.getQueryFromLocalStorage();
+
     return (
       <section className="bg-flannel mx-auto flex min-h-dvh max-w-5xl flex-col gap-6 px-4 py-16">
         <PageTitleComponent title="Book search!" />
-        <SearchFormComponent handleSearch={this.handleSearch} />
+        <SearchFormComponent query={query} handleSearch={this.handleSearch} />
+        <ErrorButtonComponent />
         {isLoading ? (
           this.renderLoader()
         ) : (

@@ -2,6 +2,7 @@ import { Component } from 'react';
 
 type SearchFormComponentProps = {
   handleSearch: (query: FormDataEntryValue | null) => void;
+  query: string;
 };
 
 class SearchFormComponent extends Component<SearchFormComponentProps> {
@@ -17,6 +18,8 @@ class SearchFormComponent extends Component<SearchFormComponentProps> {
   }
 
   render() {
+    const { query } = this.props;
+
     return (
       <form name="search-form" action={this.search} className="flex gap-2">
         <input
@@ -24,6 +27,9 @@ class SearchFormComponent extends Component<SearchFormComponentProps> {
           placeholder="Search for a book"
           className="bg-white rounded-md p-2"
           name="query"
+          defaultValue={query}
+          minLength={3}
+          maxLength={100}
         />
         <button
           type="submit"
