@@ -1,1 +1,21 @@
 @import 'tailwindcss';
+
+@utility bg-flannel {
+  background-color: #1e83c2;
+
+  background-image:
+    repeating-linear-gradient(
+      15deg,
+      transparent,
+      transparent 64px,
+      rgba(0, 0, 0, 0.6) 64px,
+      rgba(0, 0, 0, 0.6) 128px
+    ),
+    repeating-linear-gradient(
+      115deg,
+      transparent,
+      transparent 64px,
+      rgba(0, 0, 0, 0.6) 64px,
+      rgba(0, 0, 0, 0.6) 128px
+    );
+}
