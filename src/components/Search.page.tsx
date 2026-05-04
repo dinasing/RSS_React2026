@@ -38,12 +38,26 @@ class SearchPage extends Component {
     localStorage.setItem('query', query);
   };
 
+  removeQueryFromLocalStorage = () => {
+    localStorage.removeItem('query');
+  };
+
   handleSearch = async (query: string) => {
     const trimmedQuery = trimQuery(query);
-    if (!trimmedQuery) {
+    if (!trimmedQuery && this.getQueryFromLocalStorage()) {
       await this.handleDefaultBooks();
+      this.removeQueryFromLocalStorage();
+
       return;
     }
+
+    if (
+      this.getQueryFromLocalStorage() === trimmedQuery &&
+      this.state.searchResults.numFound
+    ) {
+      return;
+    }
+
     this.setQueryToLocalStorage(trimmedQuery);
     this.setState(() => ({ isLoading: true, errorMessage: null }));
 
