@@ -1,0 +1,40 @@
+import { Component } from 'react';
+
+type SearchFormComponentProps = {
+  handleSearch: (query: FormDataEntryValue | null) => void;
+};
+
+class SearchFormComponent extends Component<SearchFormComponentProps> {
+  constructor(props: SearchFormComponentProps) {
+    super(props);
+    this.search = this.search.bind(this);
+  }
+
+  search(formData: FormData): void {
+    const query = formData.get('query');
+
+    this.props.handleSearch(query);
+  }
+
+  render() {
+    return (
+      <form name="search-form" action={this.search} className="flex gap-2">
+        <input
+          type="text"
+          placeholder="Search for a book"
+          className="bg-white rounded-md p-2"
+          name="query"
+        />
+        <button
+          type="submit"
+          className="bg-white rounded-md p-2"
+          aria-label="Search for a book"
+        >
+          Search
+        </button>
+      </form>
+    );
+  }
+}
+
+export default SearchFormComponent;

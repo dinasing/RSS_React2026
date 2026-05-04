@@ -10,7 +10,7 @@ class SearchResultsComponent extends Component<{
     const { searchResults } = this.props;
 
     return (
-      <section className="">
+      <section className="flex flex-col flex-wrap gap-4 md:flex-row">
         {searchResults.docs &&
           searchResults.docs.map((searchResultItem: SearchResultItemType) => (
             <SearchResultItemComponent
