@@ -1,20 +1,37 @@
 import { Component } from 'react';
-import { searchBooks } from '../api/books.api';
+import { getTrendingWeeklyBooks, searchBooks } from '../api/books.api';
 import type { SearchResultsType } from '../types/searchResults.type';
 import PageTitleComponent from './PageTitle.component';
 import SearchFormComponent from './SearchForm.component';
 import SearchResultsComponent from './SearchResults.component';
 
+type SearchPageState = {
+  searchResults: SearchResultsType;
+  isLoading: boolean;
+  query: string;
+};
+
 class SearchPage extends Component {
-  state = {
+  state: SearchPageState = {
     searchResults: {} as SearchResultsType,
     isLoading: false,
+    query: '',
   };
+
+  componentDidMount(): void {
+    this.handleDefaultBooks();
+  }
 
   handleSearch = async (query: string) => {
     if (!query) return;
     this.setState(() => ({ isLoading: true }));
     const searchResults = await searchBooks(query);
+    this.setState(() => ({ searchResults, isLoading: false }));
+  };
+
+  handleDefaultBooks = async () => {
+    this.setState(() => ({ isLoading: true }));
+    const searchResults = await getTrendingWeeklyBooks();
     this.setState(() => ({ searchResults, isLoading: false }));
   };
 
@@ -24,7 +41,7 @@ class SearchPage extends Component {
         className="absolute top-0 left-0
         items-center min-h-dvh min-w-dvw backdrop-blur-sm transition-opacity duration-300"
       >
-        <div className="text-2xl italic text-white p-96">
+        <div className="text-2xl italic text-white md:p-96 p-[40%]">
           So many books, so little time...
         </div>
       </div>
