@@ -1,6 +1,7 @@
 import { Component } from 'react';
 import { getTrendingWeeklyBooks, searchBooks } from '../api/books.api';
 import type { SearchResultsType } from '../types/searchResults.type';
+import { trimQuery } from '../util/trimQuery.util';
 import ErrorBoundaryComponent from './ErrorBoundary.component';
 import ErrorButtonComponent from './ErrorButton.component';
 import PageTitleComponent from './PageTitle.component';
@@ -30,7 +31,7 @@ class SearchPage extends Component {
   }
 
   getQueryFromLocalStorage = () => {
-    return localStorage.getItem('query');
+    return trimQuery(localStorage.getItem('query'));
   };
 
   setQueryToLocalStorage = (query: string) => {
@@ -38,12 +39,16 @@ class SearchPage extends Component {
   };
 
   handleSearch = async (query: string) => {
-    if (!query) return;
-    this.setQueryToLocalStorage(query);
+    const trimmedQuery = trimQuery(query);
+    if (!trimmedQuery) {
+      await this.handleDefaultBooks();
+      return;
+    }
+    this.setQueryToLocalStorage(trimmedQuery);
     this.setState(() => ({ isLoading: true, errorMessage: null }));
 
     try {
-      const searchResults = await searchBooks(query);
+      const searchResults = await searchBooks(trimmedQuery);
       this.setState(() => ({ searchResults, isLoading: false }));
     } catch (error) {
       const message =

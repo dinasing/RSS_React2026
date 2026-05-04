@@ -1,4 +1,5 @@
 import { Component } from 'react';
+import { trimQuery } from '../util/trimQuery.util';
 
 type SearchFormComponentProps = {
   handleSearch: (query: string) => void;
@@ -12,8 +13,7 @@ class SearchFormComponent extends Component<SearchFormComponentProps> {
   }
 
   search(formData: FormData): void {
-    const query = formData.get('query');
-    this.props.handleSearch(typeof query === 'string' ? query : '');
+    this.props.handleSearch(trimQuery(formData.get('query')));
   }
 
   render() {
