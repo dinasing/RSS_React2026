@@ -1,7 +1,7 @@
 import { Component } from 'react';
-import type { SearchResultItemType } from '../types/searchResultItem.type';
-import type { SearchResultsType } from '../types/searchResults.type';
-import SearchResultItemComponent from './SearchResultItem.component';
+import type { SearchResultItemType } from '../../types/searchResultItem.type';
+import type { SearchResultsType } from '../../types/searchResults.type';
+import SearchResultItemComponent from '../SearchResultItem/SearchResultItem.component';
 
 class SearchResultsComponent extends Component<{
   searchResults: SearchResultsType;

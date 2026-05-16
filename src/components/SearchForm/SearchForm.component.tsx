@@ -1,5 +1,5 @@
 import { Component } from 'react';
-import { trimQuery } from '../util/trimQuery.util';
+import { trimQuery } from '../../util/trimQuery.util';
 
 type SearchFormComponentProps = {
   handleSearch: (query: string) => void;

@@ -1,12 +1,12 @@
 import { Component } from 'react';
-import { getTrendingWeeklyBooks, searchBooks } from '../api/books.api';
-import type { SearchResultsType } from '../types/searchResults.type';
-import { trimQuery } from '../util/trimQuery.util';
-import ErrorBoundaryComponent from './ErrorBoundary.component';
-import ErrorButtonComponent from './ErrorButton.component';
-import PageTitleComponent from './PageTitle.component';
-import SearchFormComponent from './SearchForm.component';
-import SearchResultsComponent from './SearchResults.component';
+import { getTrendingWeeklyBooks, searchBooks } from '../../api/books.api';
+import type { SearchResultsType } from '../../types/searchResults.type';
+import { trimQuery } from '../../util/trimQuery.util';
+import ErrorBoundaryComponent from '../../components/ErrorBoundary/ErrorBoundary.component';
+import ErrorButtonComponent from '../../components/ErrorButton/ErrorButton.component';
+import PageTitleComponent from '../../components/PageTitle/PageTitle.component';
+import SearchFormComponent from '../../components/SearchForm/SearchForm.component';
+import SearchResultsComponent from '../../components/SearchResults/SearchResults.component';
 
 type SearchPageState = {
   searchResults: SearchResultsType;

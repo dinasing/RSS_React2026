@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import { BrowserRouter } from 'react-router';
 import * as booksApi from './api/books.api';
 import App from './App';
 import { mockTrendingResults } from './test-utils/fixtures';
@@ -17,7 +18,11 @@ describe('App', () => {
   });
 
   it('renders the search page', async () => {
-    render(<App />);
+    render(
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    );
 
     expect(
       await screen.findByRole('heading', { name: /book search/i })

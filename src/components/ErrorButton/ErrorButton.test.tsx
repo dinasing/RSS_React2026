@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import ErrorBoundaryComponent from './ErrorBoundary.component';
+import ErrorBoundaryComponent from '../ErrorBoundary/ErrorBoundary.component';
 import ErrorButtonComponent from './ErrorButton.component';
 
 describe('ErrorButtonComponent', () => {

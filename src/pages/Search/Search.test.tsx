@@ -1,15 +1,15 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import * as booksApi from '../api/books.api';
+import * as booksApi from '../../api/books.api';
 import {
   mockBook,
   mockBookSearch,
   mockSearchResults,
   mockTrendingResults,
-} from '../test-utils/fixtures';
+} from '../../test-utils/fixtures';
 import SearchPage from './Search.page';
 
-vi.mock('../api/books.api', () => ({
+vi.mock('../../api/books.api', () => ({
   searchBooks: vi.fn(),
   getTrendingWeeklyBooks: vi.fn(),
 }));

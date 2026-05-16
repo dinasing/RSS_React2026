@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { mockBook, mockBookSearch } from '../test-utils/fixtures';
+import { mockBook, mockBookSearch } from '../../test-utils/fixtures';
 import SearchResultsComponent from './SearchResults.component';
 
 describe('SearchResultsComponent', () => {

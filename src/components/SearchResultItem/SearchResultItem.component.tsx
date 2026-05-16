@@ -1,5 +1,5 @@
 import { Component } from 'react';
-import type { SearchResultItemType } from '../types/searchResultItem.type';
+import type { SearchResultItemType } from '../../types/searchResultItem.type';
 
 type SearchResultItemProps = {
   searchResultItem: SearchResultItemType;

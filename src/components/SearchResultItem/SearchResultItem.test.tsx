@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { mockBook } from '../test-utils/fixtures';
-import type { SearchResultItemType } from '../types/searchResultItem.type';
+import { mockBook } from '../../test-utils/fixtures';
+import type { SearchResultItemType } from '../../types/searchResultItem.type';
 import SearchResultItemComponent from './SearchResultItem.component';
 
 describe('SearchResultItemComponent', () => {
