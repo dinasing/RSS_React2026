@@ -5,13 +5,13 @@ import {
   mockBook,
   mockBookSearch,
   mockSearchResults,
-  mockTrendingResults,
+  mockDefaultResults,
 } from '../../test-utils/fixtures';
 import SearchPage from './Search.page';
 
 vi.mock('../../api/books.api', () => ({
   searchBooks: vi.fn(),
-  getTrendingWeeklyBooks: vi.fn(),
+  getDefaultBooks: vi.fn(),
 }));
 
 function createDeferred<T>() {
@@ -28,7 +28,7 @@ describe('SearchPage', () => {
   beforeEach(() => {
     localStorage.clear();
     vi.mocked(booksApi.searchBooks).mockReset();
-    vi.mocked(booksApi.getTrendingWeeklyBooks).mockReset();
+    vi.mocked(booksApi.getDefaultBooks).mockReset();
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
   });
 
@@ -36,14 +36,12 @@ describe('SearchPage', () => {
     vi.mocked(console.error).mockRestore();
   });
 
-  it('loads trending books on mount when localStorage is empty', async () => {
-    vi.mocked(booksApi.getTrendingWeeklyBooks).mockResolvedValue(
-      mockTrendingResults
-    );
+  it('loads default books on mount when localStorage is empty', async () => {
+    vi.mocked(booksApi.getDefaultBooks).mockResolvedValue(mockDefaultResults);
 
     render(<SearchPage />);
 
-    expect(booksApi.getTrendingWeeklyBooks).toHaveBeenCalledTimes(1);
+    expect(booksApi.getDefaultBooks).toHaveBeenCalledTimes(1);
     expect(booksApi.searchBooks).not.toHaveBeenCalled();
     expect(await screen.findByText(mockBook.title)).toBeInTheDocument();
   });
@@ -60,16 +58,14 @@ describe('SearchPage', () => {
   });
 
   it('shows loading text while data is loading', async () => {
-    const deferred = createDeferred<typeof mockTrendingResults>();
-    vi.mocked(booksApi.getTrendingWeeklyBooks).mockReturnValue(
-      deferred.promise
-    );
+    const deferred = createDeferred<typeof mockDefaultResults>();
+    vi.mocked(booksApi.getDefaultBooks).mockReturnValue(deferred.promise);
 
     render(<SearchPage />);
 
     expect(screen.getByText(/so many books/i)).toBeInTheDocument();
 
-    deferred.resolve(mockTrendingResults);
+    deferred.resolve(mockDefaultResults);
 
     expect(await screen.findByText(mockBook.title)).toBeInTheDocument();
     expect(screen.queryByText(/so many books/i)).not.toBeInTheDocument();
@@ -77,9 +73,7 @@ describe('SearchPage', () => {
 
   it('submits trimmed search, updates results, and saves localStorage', async () => {
     const user = userEvent.setup();
-    vi.mocked(booksApi.getTrendingWeeklyBooks).mockResolvedValue(
-      mockTrendingResults
-    );
+    vi.mocked(booksApi.getDefaultBooks).mockResolvedValue(mockDefaultResults);
     vi.mocked(booksApi.searchBooks).mockResolvedValue(mockSearchResults);
 
     render(<SearchPage />);
@@ -120,21 +114,19 @@ describe('SearchPage', () => {
     const user = userEvent.setup();
     localStorage.setItem('query', 'react');
     vi.mocked(booksApi.searchBooks).mockResolvedValue(mockSearchResults);
-    vi.mocked(booksApi.getTrendingWeeklyBooks).mockResolvedValue(
-      mockTrendingResults
-    );
+    vi.mocked(booksApi.getDefaultBooks).mockResolvedValue(mockDefaultResults);
 
     render(<SearchPage />);
     await screen.findByText(mockBookSearch.title);
 
-    vi.mocked(booksApi.getTrendingWeeklyBooks).mockClear();
+    vi.mocked(booksApi.getDefaultBooks).mockClear();
 
     await user.clear(screen.getByPlaceholderText(/search for a book/i));
     await user.click(
       screen.getByRole('button', { name: /search for a book/i })
     );
 
-    expect(booksApi.getTrendingWeeklyBooks).toHaveBeenCalled();
+    expect(booksApi.getDefaultBooks).toHaveBeenCalled();
     expect(localStorage.getItem('query')).toBeNull();
     expect(await screen.findByText(mockBook.title)).toBeInTheDocument();
   });
@@ -164,7 +156,7 @@ describe('SearchPage', () => {
   });
 
   it('shows an alert when default books fail', async () => {
-    vi.mocked(booksApi.getTrendingWeeklyBooks).mockRejectedValue(
+    vi.mocked(booksApi.getDefaultBooks).mockRejectedValue(
       new Error('Network down')
     );
 
@@ -174,7 +166,7 @@ describe('SearchPage', () => {
   });
 
   it('shows non-Error rejection message using fallback copy', async () => {
-    vi.mocked(booksApi.getTrendingWeeklyBooks).mockRejectedValue('oops');
+    vi.mocked(booksApi.getDefaultBooks).mockRejectedValue('oops');
 
     render(<SearchPage />);
 
@@ -185,9 +177,7 @@ describe('SearchPage', () => {
 
   it('error button triggers boundary fallback and logs to console', async () => {
     const user = userEvent.setup();
-    vi.mocked(booksApi.getTrendingWeeklyBooks).mockResolvedValue(
-      mockTrendingResults
-    );
+    vi.mocked(booksApi.getDefaultBooks).mockResolvedValue(mockDefaultResults);
 
     render(<SearchPage />);
     await screen.findByText(mockBook.title);

@@ -34,20 +34,4 @@ export const searchBooks = async (
   }
 };
 
-type TrendingWeeklyResponse = {
-  works?: Array<Record<string, unknown>>;
-};
-
-export const getTrendingWeeklyBooks = async () => {
-  const response = await fetch(
-    `${BASE_URL}trending/weekly.json?limit=10`,
-    options
-  );
-  const data = (await response.json()) as TrendingWeeklyResponse;
-  const works = data.works ?? [];
-  return {
-    numFound: works.length,
-    start: 0,
-    docs: works,
-  };
-};
+export const getDefaultBooks = () => searchBooks('subject:fiction');

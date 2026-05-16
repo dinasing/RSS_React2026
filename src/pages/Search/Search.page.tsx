@@ -1,5 +1,5 @@
 import { Component } from 'react';
-import { getTrendingWeeklyBooks, searchBooks } from '../../api/books.api';
+import { getDefaultBooks, searchBooks } from '../../api/books.api';
 import type { SearchResultsType } from '../../types/searchResults.type';
 import { trimQuery } from '../../util/trimQuery.util';
 import ErrorBoundaryComponent from '../../components/ErrorBoundary/ErrorBoundary.component';
@@ -81,7 +81,7 @@ class SearchPage extends Component {
     this.setState(() => ({ isLoading: true, errorMessage: null }));
 
     try {
-      const searchResults = await getTrendingWeeklyBooks();
+      const searchResults = await getDefaultBooks();
       this.setState(() => ({ searchResults, isLoading: false }));
     } catch (error) {
       const message =

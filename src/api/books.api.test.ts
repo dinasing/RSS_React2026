@@ -1,4 +1,4 @@
-import { getTrendingWeeklyBooks, searchBooks } from './books.api';
+import { getDefaultBooks, searchBooks } from './books.api';
 
 describe('books.api', () => {
   const fetchMock = vi.fn();
@@ -67,30 +67,19 @@ describe('books.api', () => {
     });
   });
 
-  describe('getTrendingWeeklyBooks', () => {
-    it('normalizes works into search results shape', async () => {
-      const works = [{ key: '/works/1', title: 'Trend' }];
+  describe('getDefaultBooks', () => {
+    it('searches fiction when the query is empty', async () => {
+      const payload = { numFound: 2, start: 0, docs: [{ key: '/works/1' }] };
       fetchMock.mockResolvedValue({
-        json: async () => ({ works }),
+        ok: true,
+        json: async () => payload,
       });
 
-      await expect(getTrendingWeeklyBooks()).resolves.toEqual({
-        numFound: 1,
-        start: 0,
-        docs: works,
-      });
-    });
-
-    it('returns empty docs when works is missing', async () => {
-      fetchMock.mockResolvedValue({
-        json: async () => ({}),
-      });
-
-      await expect(getTrendingWeeklyBooks()).resolves.toEqual({
-        numFound: 0,
-        start: 0,
-        docs: [],
-      });
+      await expect(getDefaultBooks()).resolves.toEqual(payload);
+      expect(fetchMock).toHaveBeenCalledWith(
+        'https://openlibrary.org/search.json?q=subject:fiction&limit=10&offset=0',
+        expect.any(Object)
+      );
     });
   });
 });
