@@ -44,6 +44,16 @@ describe('SearchPage', () => {
     expect(booksApi.getDefaultBooks).toHaveBeenCalledTimes(1);
     expect(booksApi.searchBooks).not.toHaveBeenCalled();
     expect(await screen.findByText(mockBook.title)).toBeInTheDocument();
+    expect(booksApi.getDefaultBooks).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not refetch default books after results load on empty query', async () => {
+    vi.mocked(booksApi.getDefaultBooks).mockResolvedValue(mockDefaultResults);
+
+    render(<SearchPage />);
+    await screen.findByText(mockBook.title);
+
+    expect(booksApi.getDefaultBooks).toHaveBeenCalledTimes(1);
   });
 
   it('searches with saved query on mount and prefills the input', async () => {
