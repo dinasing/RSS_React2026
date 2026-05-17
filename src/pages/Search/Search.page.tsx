@@ -127,7 +127,7 @@ const SearchPage = () => {
   const query = getQueryFromLocalStorage();
 
   return (
-    <section className="bg-flannel mx-auto flex min-h-dvh max-w-5xl flex-col gap-6 px-4 py-16">
+    <section className="flex flex-col gap-6">
       <PageTitleComponent title="Book search!" />
       <SearchFormComponent query={query} handleSearch={handleSearch} />
       {errorMessage ? (
