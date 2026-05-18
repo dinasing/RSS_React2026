@@ -29,13 +29,15 @@ const SearchResultsComponent = ({
           />
         ))}
     </div>
-    <PaginationComponent
-      page={page}
-      numFound={searchResults.numFound}
-      limit={10}
-      onPrevious={onPrevious}
-      onNext={onNext}
-    />
+    {searchResults.numFound > 0 ? (
+      <PaginationComponent
+        page={page}
+        numFound={searchResults.numFound}
+        limit={10}
+        onPrevious={onPrevious}
+        onNext={onNext}
+      />
+    ) : null}
   </section>
 );
 
