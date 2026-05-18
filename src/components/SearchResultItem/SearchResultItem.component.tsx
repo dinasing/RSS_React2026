@@ -3,6 +3,8 @@ import type { SearchResultItemType } from '../../types/searchResultItem.type';
 
 type SearchResultItemProps = {
   searchResultItem: SearchResultItemType;
+  isSelected?: boolean;
+  onSelect: (workKey: string) => void;
 };
 
 const getCover = (cover_i: number, size: 'S' | 'M' | 'L' = 'M') =>
@@ -10,6 +12,8 @@ const getCover = (cover_i: number, size: 'S' | 'M' | 'L' = 'M') =>
 
 const SearchResultItemComponent = ({
   searchResultItem,
+  isSelected = false,
+  onSelect,
 }: SearchResultItemProps) => {
   const [failedCoverId, setFailedCoverId] = useState<number | null>(null);
   const { title, author_name, first_publish_year, cover_i } = searchResultItem;
@@ -52,10 +56,16 @@ const SearchResultItemComponent = ({
   };
 
   return (
-    <div
-      className="p-4 bg-white rounded-md
-          flex flex-row justify-between
-          items-center gap-4"
+    <button
+      type="button"
+      onClick={(event) => {
+        event.stopPropagation();
+        onSelect(searchResultItem.key);
+      }}
+      aria-pressed={isSelected}
+      className={`w-full cursor-pointer rounded-md bg-white p-4 text-left
+          flex flex-row items-center justify-between gap-4
+          ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
     >
       <div className="grid grid-cols-[80px_1fr] gap-2">
         <div>{renderCover()}</div>
@@ -65,7 +75,7 @@ const SearchResultItemComponent = ({
           {renderFirstPublishYear()}
         </div>
       </div>
-    </div>
+    </button>
   );
 };
 

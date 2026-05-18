@@ -6,6 +6,8 @@ import SearchResultItemComponent from '../SearchResultItem/SearchResultItem.comp
 type SearchResultsComponentProps = {
   searchResults: SearchResultsType;
   page: number;
+  selectedWorkKey: string | null;
+  onItemSelect: (workKey: string) => void;
   onPrevious: () => void;
   onNext: () => void;
 };
@@ -13,6 +15,8 @@ type SearchResultsComponentProps = {
 const SearchResultsComponent = ({
   searchResults,
   page,
+  selectedWorkKey,
+  onItemSelect,
   onPrevious,
   onNext,
 }: SearchResultsComponentProps) => (
@@ -26,6 +30,8 @@ const SearchResultsComponent = ({
           <SearchResultItemComponent
             key={searchResultItem.key}
             searchResultItem={searchResultItem}
+            isSelected={selectedWorkKey === searchResultItem.key}
+            onSelect={onItemSelect}
           />
         ))}
     </div>
