@@ -14,6 +14,7 @@ import LoaderComponent from '../../components/Loader/Loader.component';
 import PageTitleComponent from '../../components/PageTitle/PageTitle.component';
 import SearchFormComponent from '../../components/SearchForm/SearchForm.component';
 import SearchResultsComponent from '../../components/SearchResults/SearchResults.component';
+import { useLocalStorage } from '../../hooks/useLocalStorage/useLocalStorage.hook';
 import type { SearchResultsType } from '../../types/searchResults.type';
 import {
   buildPageSearchParams,
@@ -32,15 +33,7 @@ type BooksRequest = {
   page: number;
 };
 
-const getQueryFromLocalStorage = () => trimQuery(localStorage.getItem('query'));
-
-const setQueryToLocalStorage = (query: string) => {
-  localStorage.setItem('query', query);
-};
-
-const removeQueryFromLocalStorage = () => {
-  localStorage.removeItem('query');
-};
+const QUERY_STORAGE_KEY = 'query';
 
 const isSameRequest = (a: BooksRequest, b: BooksRequest) =>
   a.query === b.query && a.page === b.page;
@@ -48,10 +41,11 @@ const isSameRequest = (a: BooksRequest, b: BooksRequest) =>
 const SearchPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const page = parsePageParam(searchParams.get('page'));
-  const [query, setQuery] = useState<string | null>(() => {
-    const saved = getQueryFromLocalStorage();
-    return saved || null;
-  });
+  const [storedQuery, setStoredQuery, removeQuery] = useLocalStorage(
+    QUERY_STORAGE_KEY,
+    null
+  );
+  const query = storedQuery === null ? null : trimQuery(storedQuery) || null;
   const [searchResults, setSearchResults] = useState<SearchResultsType>(
     {} as SearchResultsType
   );
@@ -108,22 +102,19 @@ const SearchPage = () => {
 
     if (!trimmedQuery) {
       if (query) {
-        removeQueryFromLocalStorage();
-        setQuery(null);
+        removeQuery();
         setPage(1);
       }
 
       return;
     }
 
-    setQueryToLocalStorage(trimmedQuery);
-
     if (trimmedQuery === query && page === 1) {
       return;
     }
 
     if (trimmedQuery !== query) {
-      setQuery(trimmedQuery);
+      setStoredQuery(trimmedQuery);
     }
 
     if (page !== 1) {
