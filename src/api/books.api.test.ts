@@ -1,4 +1,4 @@
-import { getTrendingWeeklyBooks, searchBooks } from './books.api';
+import { getBookDetails, getDefaultBooks, searchBooks } from './books.api';
 
 describe('books.api', () => {
   const fetchMock = vi.fn();
@@ -13,7 +13,7 @@ describe('books.api', () => {
   });
 
   describe('searchBooks', () => {
-    it('requests the first page with default limit and offset', async () => {
+    it('requests the first page with default limit and page', async () => {
       fetchMock.mockResolvedValue({
         ok: true,
         json: async () => ({ numFound: 0, docs: [] }),
@@ -22,12 +22,12 @@ describe('books.api', () => {
       await searchBooks('react');
 
       expect(fetchMock).toHaveBeenCalledWith(
-        'https://openlibrary.org/search.json?q=react&limit=10&offset=0',
+        'https://openlibrary.org/search.json?q=react&limit=10&page=1',
         expect.any(Object)
       );
     });
 
-    it('supports custom limit and offset', async () => {
+    it('supports custom limit and page', async () => {
       fetchMock.mockResolvedValue({
         ok: true,
         json: async () => ({ numFound: 0, docs: [] }),
@@ -36,7 +36,7 @@ describe('books.api', () => {
       await searchBooks('vue', 5, 10);
 
       expect(fetchMock).toHaveBeenCalledWith(
-        'https://openlibrary.org/search.json?q=vue&limit=5&offset=10',
+        'https://openlibrary.org/search.json?q=vue&limit=10&page=5',
         expect.any(Object)
       );
     });
@@ -67,30 +67,43 @@ describe('books.api', () => {
     });
   });
 
-  describe('getTrendingWeeklyBooks', () => {
-    it('normalizes works into search results shape', async () => {
-      const works = [{ key: '/works/1', title: 'Trend' }];
+  describe('getBookDetails', () => {
+    it('requests work details json', async () => {
+      const payload = { title: 'Work title' };
       fetchMock.mockResolvedValue({
-        json: async () => ({ works }),
+        ok: true,
+        json: async () => payload,
       });
 
-      await expect(getTrendingWeeklyBooks()).resolves.toEqual({
-        numFound: 1,
-        start: 0,
-        docs: works,
-      });
+      await expect(getBookDetails('/works/OL1W')).resolves.toEqual(payload);
+      expect(fetchMock).toHaveBeenCalledWith(
+        'https://openlibrary.org/works/OL1W.json',
+        expect.any(Object)
+      );
     });
 
-    it('returns empty docs when works is missing', async () => {
+    it('throws on non-OK response', async () => {
+      fetchMock.mockResolvedValue({ ok: false });
+
+      await expect(getBookDetails('/works/OL1W')).rejects.toThrow(
+        /cannot load book details/i
+      );
+    });
+  });
+
+  describe('getDefaultBooks', () => {
+    it('searches fiction when the query is empty', async () => {
+      const payload = { numFound: 2, start: 0, docs: [{ key: '/works/1' }] };
       fetchMock.mockResolvedValue({
-        json: async () => ({}),
+        ok: true,
+        json: async () => payload,
       });
 
-      await expect(getTrendingWeeklyBooks()).resolves.toEqual({
-        numFound: 0,
-        start: 0,
-        docs: [],
-      });
+      await expect(getDefaultBooks()).resolves.toEqual(payload);
+      expect(fetchMock).toHaveBeenCalledWith(
+        'https://openlibrary.org/search.json?q=subject:fiction&limit=10&page=1',
+        expect.any(Object)
+      );
     });
   });
 });

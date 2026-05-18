@@ -11,12 +11,12 @@ const options = {
 
 export const searchBooks = async (
   query: string,
-  limit: number = 10,
-  offset: number = 0
+  page: number = 1,
+  limit: number = 10
 ) => {
   try {
     const response = await fetch(
-      `${BASE_URL}search.json?q=${query}&limit=${limit}&offset=${offset}`,
+      `${BASE_URL}search.json?q=${query}&limit=${limit}&page=${page}`,
       options
     );
 
@@ -34,20 +34,24 @@ export const searchBooks = async (
   }
 };
 
-type TrendingWeeklyResponse = {
-  works?: Array<Record<string, unknown>>;
-};
+export const getDefaultBooks = (page: number = 1) =>
+  searchBooks('subject:fiction', page);
 
-export const getTrendingWeeklyBooks = async () => {
-  const response = await fetch(
-    `${BASE_URL}trending/weekly.json?limit=10`,
-    options
-  );
-  const data = (await response.json()) as TrendingWeeklyResponse;
-  const works = data.works ?? [];
-  return {
-    numFound: works.length,
-    start: 0,
-    docs: works,
-  };
+export const getBookDetails = async (workKey: string) => {
+  const path = workKey.startsWith('/') ? workKey.slice(1) : `works/${workKey}`;
+
+  try {
+    const response = await fetch(`${BASE_URL}${path}.json`, options);
+
+    if (!response.ok) {
+      throw new Error('Cannot load book details. Please try again.');
+    }
+
+    return response.json();
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Cannot load book details. Please try again.');
+  }
 };

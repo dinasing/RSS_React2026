@@ -17,7 +17,7 @@ export const mockBookSearch: SearchResultItemType = {
   cover_i: 1002,
 };
 
-export const mockTrendingResults: SearchResultsType = {
+export const mockDefaultResults: SearchResultsType = {
   numFound: 1,
   start: 0,
   docs: [mockBook],
@@ -27,4 +27,12 @@ export const mockSearchResults: SearchResultsType = {
   numFound: 1,
   start: 0,
   docs: [mockBookSearch],
+};
+
+export const mockBookDetails = {
+  title: 'Test Book',
+  description: 'A detailed description.',
+  subjects: ['Fiction'],
+  covers: [1001],
+  first_publish_date: '2001',
 };

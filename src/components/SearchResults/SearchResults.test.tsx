@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { mockBook, mockBookSearch } from '../test-utils/fixtures';
+import { mockBook, mockBookSearch } from '../../test-utils/fixtures';
 import SearchResultsComponent from './SearchResults.component';
 
 describe('SearchResultsComponent', () => {
@@ -7,10 +7,21 @@ describe('SearchResultsComponent', () => {
     render(
       <SearchResultsComponent
         searchResults={{ numFound: 0, start: 0, docs: [] }}
+        page={1}
+        selectedWorkKey={null}
+        onItemSelect={() => {}}
+        onPrevious={() => {}}
+        onNext={() => {}}
       />
     );
 
     expect(screen.getByText(/no results found/i)).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /prev/i })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /next/i })
+    ).not.toBeInTheDocument();
   });
 
   it('renders each result with name and author text', () => {
@@ -21,6 +32,11 @@ describe('SearchResultsComponent', () => {
           start: 0,
           docs: [mockBook, mockBookSearch],
         }}
+        page={1}
+        selectedWorkKey={null}
+        onItemSelect={() => {}}
+        onPrevious={() => {}}
+        onNext={() => {}}
       />
     );
 
