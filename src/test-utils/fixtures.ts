@@ -28,3 +28,11 @@ export const mockSearchResults: SearchResultsType = {
   start: 0,
   docs: [mockBookSearch],
 };
+
+export const mockBookDetails = {
+  title: 'Test Book',
+  description: 'A detailed description.',
+  subjects: ['Fiction'],
+  covers: [1001],
+  first_publish_date: '2001',
+};

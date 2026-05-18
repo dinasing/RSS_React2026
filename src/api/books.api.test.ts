@@ -1,4 +1,4 @@
-import { getDefaultBooks, searchBooks } from './books.api';
+import { getBookDetails, getDefaultBooks, searchBooks } from './books.api';
 
 describe('books.api', () => {
   const fetchMock = vi.fn();
@@ -64,6 +64,30 @@ describe('books.api', () => {
       fetchMock.mockRejectedValue('not-an-error-instance');
 
       await expect(searchBooks('x')).rejects.toThrow(/search request failed/i);
+    });
+  });
+
+  describe('getBookDetails', () => {
+    it('requests work details json', async () => {
+      const payload = { title: 'Work title' };
+      fetchMock.mockResolvedValue({
+        ok: true,
+        json: async () => payload,
+      });
+
+      await expect(getBookDetails('/works/OL1W')).resolves.toEqual(payload);
+      expect(fetchMock).toHaveBeenCalledWith(
+        'https://openlibrary.org/works/OL1W.json',
+        expect.any(Object)
+      );
+    });
+
+    it('throws on non-OK response', async () => {
+      fetchMock.mockResolvedValue({ ok: false });
+
+      await expect(getBookDetails('/works/OL1W')).rejects.toThrow(
+        /cannot load book details/i
+      );
     });
   });
 
