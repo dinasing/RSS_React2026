@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { createMemoryRouter, RouterProvider } from 'react-router';
 import * as booksApi from '../../api/books.api';
 import {
   mockBook,
@@ -13,6 +14,14 @@ vi.mock('../../api/books.api', () => ({
   searchBooks: vi.fn(),
   getDefaultBooks: vi.fn(),
 }));
+
+function renderSearchPage(initialEntry = '/') {
+  const router = createMemoryRouter([{ path: '/', element: <SearchPage /> }], {
+    initialEntries: [initialEntry],
+  });
+
+  return { router, ...render(<RouterProvider router={router} />) };
+}
 
 function createDeferred<T>() {
   let resolve!: (value: T) => void;
@@ -39,7 +48,7 @@ describe('SearchPage', () => {
   it('loads default books on mount when localStorage is empty', async () => {
     vi.mocked(booksApi.getDefaultBooks).mockResolvedValue(mockDefaultResults);
 
-    render(<SearchPage />);
+    renderSearchPage();
 
     expect(booksApi.getDefaultBooks).toHaveBeenCalledTimes(1);
     expect(booksApi.searchBooks).not.toHaveBeenCalled();
@@ -50,7 +59,7 @@ describe('SearchPage', () => {
   it('does not refetch default books after results load on empty query', async () => {
     vi.mocked(booksApi.getDefaultBooks).mockResolvedValue(mockDefaultResults);
 
-    render(<SearchPage />);
+    renderSearchPage();
     await screen.findByText(mockBook.title);
 
     expect(booksApi.getDefaultBooks).toHaveBeenCalledTimes(1);
@@ -60,7 +69,7 @@ describe('SearchPage', () => {
     localStorage.setItem('query', '  react  ');
     vi.mocked(booksApi.searchBooks).mockResolvedValue(mockSearchResults);
 
-    render(<SearchPage />);
+    renderSearchPage();
 
     expect(screen.getByDisplayValue('react')).toBeInTheDocument();
     expect(booksApi.searchBooks).toHaveBeenCalledWith('react', 1);
@@ -71,7 +80,7 @@ describe('SearchPage', () => {
     const deferred = createDeferred<typeof mockDefaultResults>();
     vi.mocked(booksApi.getDefaultBooks).mockReturnValue(deferred.promise);
 
-    render(<SearchPage />);
+    renderSearchPage();
 
     expect(screen.getByText(/so many books/i)).toBeInTheDocument();
 
@@ -86,7 +95,7 @@ describe('SearchPage', () => {
     vi.mocked(booksApi.getDefaultBooks).mockResolvedValue(mockDefaultResults);
     vi.mocked(booksApi.searchBooks).mockResolvedValue(mockSearchResults);
 
-    render(<SearchPage />);
+    renderSearchPage();
     await screen.findByText(mockBook.title);
 
     await user.clear(screen.getByPlaceholderText(/search for a book/i));
@@ -108,7 +117,7 @@ describe('SearchPage', () => {
     localStorage.setItem('query', 'react');
     vi.mocked(booksApi.searchBooks).mockResolvedValue(mockSearchResults);
 
-    render(<SearchPage />);
+    renderSearchPage();
     await screen.findByText(mockBookSearch.title);
 
     vi.mocked(booksApi.searchBooks).mockClear();
@@ -126,7 +135,7 @@ describe('SearchPage', () => {
     vi.mocked(booksApi.searchBooks).mockResolvedValue(mockSearchResults);
     vi.mocked(booksApi.getDefaultBooks).mockResolvedValue(mockDefaultResults);
 
-    render(<SearchPage />);
+    renderSearchPage();
     await screen.findByText(mockBookSearch.title);
 
     vi.mocked(booksApi.getDefaultBooks).mockClear();
@@ -147,7 +156,7 @@ describe('SearchPage', () => {
       new Error('Server unavailable')
     );
 
-    render(<SearchPage />);
+    renderSearchPage();
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       /server unavailable/i
@@ -158,7 +167,7 @@ describe('SearchPage', () => {
     localStorage.setItem('query', 'x');
     vi.mocked(booksApi.searchBooks).mockRejectedValue('bad');
 
-    render(<SearchPage />);
+    renderSearchPage();
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       /search request failed\. please try again\./i
@@ -170,7 +179,7 @@ describe('SearchPage', () => {
       new Error('Network down')
     );
 
-    render(<SearchPage />);
+    renderSearchPage();
 
     expect(await screen.findByRole('alert')).toHaveTextContent(/network down/i);
   });
@@ -178,18 +187,60 @@ describe('SearchPage', () => {
   it('shows non-Error rejection message using fallback copy', async () => {
     vi.mocked(booksApi.getDefaultBooks).mockRejectedValue('oops');
 
-    render(<SearchPage />);
+    renderSearchPage();
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       /cannot load default books\. please try again\./i
     );
   });
 
+  it('loads books for page from URL search param', async () => {
+    vi.mocked(booksApi.getDefaultBooks).mockResolvedValue(mockDefaultResults);
+
+    renderSearchPage('/?page=2');
+
+    expect(booksApi.getDefaultBooks).toHaveBeenCalledWith(2);
+    expect(await screen.findByText(mockBook.title)).toBeInTheDocument();
+  });
+
+  it('updates URL when navigating to next page', async () => {
+    const user = userEvent.setup();
+    vi.mocked(booksApi.getDefaultBooks).mockResolvedValue({
+      ...mockDefaultResults,
+      numFound: 25,
+    });
+
+    const { router } = renderSearchPage();
+    await screen.findByText(mockBook.title);
+
+    vi.mocked(booksApi.getDefaultBooks).mockClear();
+
+    await user.click(screen.getByRole('button', { name: /next/i }));
+
+    expect(router.state.location.search).toBe('?page=2');
+    expect(booksApi.getDefaultBooks).toHaveBeenCalledWith(2);
+  });
+
+  it('removes page param from URL when returning to first page', async () => {
+    const user = userEvent.setup();
+    vi.mocked(booksApi.getDefaultBooks).mockResolvedValue({
+      ...mockDefaultResults,
+      numFound: 25,
+    });
+
+    const { router } = renderSearchPage('/?page=2');
+    await screen.findByText(mockBook.title);
+
+    await user.click(screen.getByRole('button', { name: /prev/i }));
+
+    expect(router.state.location.search).toBe('');
+  });
+
   it('error button triggers boundary fallback and logs to console', async () => {
     const user = userEvent.setup();
     vi.mocked(booksApi.getDefaultBooks).mockResolvedValue(mockDefaultResults);
 
-    render(<SearchPage />);
+    renderSearchPage();
     await screen.findByText(mockBook.title);
 
     await user.click(

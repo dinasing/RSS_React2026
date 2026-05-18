@@ -5,6 +5,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { useSearchParams } from 'react-router';
 import { getDefaultBooks, searchBooks } from '../../api/books.api';
 import ErrorBoundaryComponent from '../../components/ErrorBoundary/ErrorBoundary.component';
 import ErrorButtonComponent from '../../components/ErrorButton/ErrorButton.component';
@@ -14,6 +15,10 @@ import PageTitleComponent from '../../components/PageTitle/PageTitle.component';
 import SearchFormComponent from '../../components/SearchForm/SearchForm.component';
 import SearchResultsComponent from '../../components/SearchResults/SearchResults.component';
 import type { SearchResultsType } from '../../types/searchResults.type';
+import {
+  buildPageSearchParams,
+  parsePageParam,
+} from '../../util/pageSearchParam.util';
 import { trimQuery } from '../../util/trimQuery.util';
 
 const emptySearchResults: SearchResultsType = {
@@ -41,17 +46,25 @@ const isSameRequest = (a: BooksRequest, b: BooksRequest) =>
   a.query === b.query && a.page === b.page;
 
 const SearchPage = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const page = parsePageParam(searchParams.get('page'));
   const [query, setQuery] = useState<string | null>(() => {
     const saved = getQueryFromLocalStorage();
     return saved || null;
   });
-  const [page, setPage] = useState(1);
   const [searchResults, setSearchResults] = useState<SearchResultsType>(
     {} as SearchResultsType
   );
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const loadedRequestRef = useRef<BooksRequest | null>(null);
+
+  const setPage = (newPage: number) => {
+    const validPage = Math.max(1, newPage);
+    setSearchParams((current) => buildPageSearchParams(current, validPage), {
+      replace: false,
+    });
+  };
 
   const loadBooks = useCallback(async (request: BooksRequest) => {
     if (
