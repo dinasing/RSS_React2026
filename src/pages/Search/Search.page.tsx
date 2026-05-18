@@ -5,7 +5,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { useSearchParams } from 'react-router';
+import { Outlet, useSearchParams } from 'react-router';
 import { getDefaultBooks, searchBooks } from '../../api/books.api';
 import ErrorBoundaryComponent from '../../components/ErrorBoundary/ErrorBoundary.component';
 import ErrorButtonComponent from '../../components/ErrorButton/ErrorButton.component';
@@ -16,6 +16,10 @@ import SearchFormComponent from '../../components/SearchForm/SearchForm.componen
 import SearchResultsComponent from '../../components/SearchResults/SearchResults.component';
 import { useLocalStorage } from '../../hooks/useLocalStorage/useLocalStorage.hook';
 import type { SearchResultsType } from '../../types/searchResults.type';
+import {
+  buildDetailsSearchParams,
+  fromDetailsParam,
+} from '../../util/detailsSearchParam.util';
 import {
   buildPageSearchParams,
   parsePageParam,
@@ -41,6 +45,8 @@ const isSameRequest = (a: BooksRequest, b: BooksRequest) =>
 const SearchPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const page = parsePageParam(searchParams.get('page'));
+  const selectedWorkKey = fromDetailsParam(searchParams.get('details'));
+  const hasDetails = selectedWorkKey !== null;
   const [storedQuery, setStoredQuery, removeQuery] = useLocalStorage(
     QUERY_STORAGE_KEY,
     null
@@ -52,6 +58,24 @@ const SearchPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const loadedRequestRef = useRef<BooksRequest | null>(null);
+
+  const openDetails = (workKey: string) => {
+    setSearchParams((current) => buildDetailsSearchParams(current, workKey), {
+      replace: false,
+    });
+  };
+
+  const closeDetails = () => {
+    setSearchParams((current) => buildDetailsSearchParams(current, null), {
+      replace: false,
+    });
+  };
+
+  const handleMasterPanelClick = () => {
+    if (hasDetails) {
+      closeDetails();
+    }
+  };
 
   const setPage = (newPage: number) => {
     const validPage = Math.max(1, newPage);
@@ -125,21 +149,39 @@ const SearchPage = () => {
   return (
     <section className="flex flex-col gap-6">
       <PageTitleComponent title="Book search!" />
-      <SearchFormComponent query={query} handleSearch={handleSearch} />
-      {errorMessage ? <ErrorMessageComponent message={errorMessage} /> : null}
-      <ErrorBoundaryComponent>
-        {isLoading ? (
-          <LoaderComponent />
-        ) : (
-          <SearchResultsComponent
-            searchResults={searchResults}
-            page={page}
-            onPrevious={() => setPage(page - 1)}
-            onNext={() => setPage(page + 1)}
-          />
-        )}
-        <ErrorButtonComponent />
-      </ErrorBoundaryComponent>
+      <div
+        className={`flex gap-6 ${hasDetails ? 'flex-col md:flex-row' : 'flex-col'}`}
+      >
+        <div
+          className={`flex min-w-0 flex-col gap-6 ${hasDetails ? 'flex-1' : 'w-full'}`}
+          onClick={handleMasterPanelClick}
+        >
+          <SearchFormComponent query={query} handleSearch={handleSearch} />
+          {errorMessage ? (
+            <ErrorMessageComponent message={errorMessage} />
+          ) : null}
+          <ErrorBoundaryComponent>
+            {isLoading ? (
+              <LoaderComponent />
+            ) : (
+              <SearchResultsComponent
+                searchResults={searchResults}
+                page={page}
+                selectedWorkKey={selectedWorkKey}
+                onItemSelect={openDetails}
+                onPrevious={() => setPage(page - 1)}
+                onNext={() => setPage(page + 1)}
+              />
+            )}
+            <ErrorButtonComponent />
+          </ErrorBoundaryComponent>
+        </div>
+        {hasDetails ? (
+          <aside className="w-full shrink-0 md:w-1/2">
+            <Outlet />
+          </aside>
+        ) : null}
+      </div>
     </section>
   );
 };

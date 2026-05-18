@@ -4,21 +4,33 @@ import { createMemoryRouter, RouterProvider } from 'react-router';
 import * as booksApi from '../../api/books.api';
 import {
   mockBook,
+  mockBookDetails,
   mockBookSearch,
   mockSearchResults,
   mockDefaultResults,
 } from '../../test-utils/fixtures';
+import BookDetailsPage from '../BookDetails/BookDetails.page';
 import SearchPage from './Search.page';
 
 vi.mock('../../api/books.api', () => ({
   searchBooks: vi.fn(),
   getDefaultBooks: vi.fn(),
+  getBookDetails: vi.fn(),
 }));
 
 function renderSearchPage(initialEntry = '/') {
-  const router = createMemoryRouter([{ path: '/', element: <SearchPage /> }], {
-    initialEntries: [initialEntry],
-  });
+  const router = createMemoryRouter(
+    [
+      {
+        path: '/',
+        element: <SearchPage />,
+        children: [{ index: true, element: <BookDetailsPage /> }],
+      },
+    ],
+    {
+      initialEntries: [initialEntry],
+    }
+  );
 
   return { router, ...render(<RouterProvider router={router} />) };
 }
@@ -38,6 +50,7 @@ describe('SearchPage', () => {
     localStorage.clear();
     vi.mocked(booksApi.searchBooks).mockReset();
     vi.mocked(booksApi.getDefaultBooks).mockReset();
+    vi.mocked(booksApi.getBookDetails).mockReset();
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
   });
 
@@ -234,6 +247,107 @@ describe('SearchPage', () => {
     await user.click(screen.getByRole('button', { name: /prev/i }));
 
     expect(router.state.location.search).toBe('');
+  });
+
+  it('opens details panel and updates URL when a result is clicked', async () => {
+    const user = userEvent.setup();
+    vi.mocked(booksApi.getDefaultBooks).mockResolvedValue(mockDefaultResults);
+    vi.mocked(booksApi.getBookDetails).mockResolvedValue(mockBookDetails);
+
+    const { router } = renderSearchPage();
+    await screen.findByText(mockBook.title);
+
+    await user.click(
+      screen.getByRole('button', { name: new RegExp(mockBook.title) })
+    );
+
+    expect(router.state.location.search).toBe('?details=OL1W');
+    expect(await screen.findByLabelText(/book details/i)).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: mockBookDetails.title })
+    ).toBeInTheDocument();
+    expect(booksApi.getBookDetails).toHaveBeenCalledWith('/works/OL1W');
+    expect(screen.getAllByText(mockBook.title).length).toBeGreaterThanOrEqual(
+      1
+    );
+  });
+
+  it('shows loading text while book details are loading', async () => {
+    const user = userEvent.setup();
+    const deferred = createDeferred<typeof mockBookDetails>();
+    vi.mocked(booksApi.getDefaultBooks).mockResolvedValue(mockDefaultResults);
+    vi.mocked(booksApi.getBookDetails).mockReturnValue(deferred.promise);
+
+    renderSearchPage();
+    await screen.findByText(mockBook.title);
+    await user.click(
+      screen.getByRole('button', { name: new RegExp(mockBook.title) })
+    );
+
+    expect(screen.getByText(/loading book details/i)).toBeInTheDocument();
+
+    deferred.resolve(mockBookDetails);
+
+    expect(
+      await screen.findByRole('heading', { name: mockBookDetails.title })
+    ).toBeInTheDocument();
+  });
+
+  it('closes details panel from close button and main panel click', async () => {
+    const user = userEvent.setup();
+    vi.mocked(booksApi.getDefaultBooks).mockResolvedValue(mockDefaultResults);
+    vi.mocked(booksApi.getBookDetails).mockResolvedValue(mockBookDetails);
+
+    const { router } = renderSearchPage();
+    await screen.findByText(mockBook.title);
+    await user.click(
+      screen.getByRole('button', { name: new RegExp(mockBook.title) })
+    );
+    await screen.findByLabelText(/book details/i);
+
+    await user.click(screen.getByRole('button', { name: /close details/i }));
+
+    expect(router.state.location.search).toBe('');
+    expect(screen.queryByLabelText(/book details/i)).not.toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole('button', { name: new RegExp(mockBook.title) })
+    );
+    await screen.findByLabelText(/book details/i);
+
+    await user.click(screen.getByPlaceholderText(/search for a book/i));
+
+    expect(router.state.location.search).toBe('');
+    expect(screen.queryByLabelText(/book details/i)).not.toBeInTheDocument();
+  });
+
+  it('keeps page and details in URL together', async () => {
+    const user = userEvent.setup();
+    vi.mocked(booksApi.getDefaultBooks).mockResolvedValue({
+      ...mockDefaultResults,
+      numFound: 25,
+    });
+    vi.mocked(booksApi.getBookDetails).mockResolvedValue(mockBookDetails);
+
+    const { router } = renderSearchPage('/?page=2');
+    await screen.findByText(mockBook.title);
+
+    await user.click(
+      screen.getByRole('button', { name: new RegExp(mockBook.title) })
+    );
+
+    expect(router.state.location.search).toBe('?page=2&details=OL1W');
+  });
+
+  it('does not show details panel on initial load', async () => {
+    vi.mocked(booksApi.getDefaultBooks).mockResolvedValue(mockDefaultResults);
+
+    renderSearchPage();
+
+    await screen.findByText(mockBook.title);
+
+    expect(screen.queryByLabelText(/book details/i)).not.toBeInTheDocument();
+    expect(booksApi.getBookDetails).not.toHaveBeenCalled();
   });
 
   it('error button triggers boundary fallback and logs to console', async () => {
