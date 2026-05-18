@@ -8,6 +8,8 @@ import {
 import { getDefaultBooks, searchBooks } from '../../api/books.api';
 import ErrorBoundaryComponent from '../../components/ErrorBoundary/ErrorBoundary.component';
 import ErrorButtonComponent from '../../components/ErrorButton/ErrorButton.component';
+import ErrorMessageComponent from '../../components/ErrorMessage/ErrorMessage.component';
+import LoaderComponent from '../../components/Loader/Loader.component';
 import PageTitleComponent from '../../components/PageTitle/PageTitle.component';
 import SearchFormComponent from '../../components/SearchForm/SearchForm.component';
 import SearchResultsComponent from '../../components/SearchResults/SearchResults.component';
@@ -116,32 +118,14 @@ const SearchPage = () => {
     }
   };
 
-  const renderLoader = () => (
-    <div
-      className="absolute top-0 left-0
-        items-center min-h-dvh min-w-dvw backdrop-blur-sm transition-opacity duration-300"
-    >
-      <div className="text-2xl italic text-white md:p-96 p-[40%]">
-        So many books, so little time...
-      </div>
-    </div>
-  );
-
   return (
     <section className="flex flex-col gap-6">
       <PageTitleComponent title="Book search!" />
       <SearchFormComponent query={query} handleSearch={handleSearch} />
-      {errorMessage ? (
-        <div
-          role="alert"
-          className="rounded-md border border-red-300 bg-red-50 p-4 text-red-900"
-        >
-          {errorMessage}
-        </div>
-      ) : null}
+      {errorMessage ? <ErrorMessageComponent message={errorMessage} /> : null}
       <ErrorBoundaryComponent>
         {isLoading ? (
-          renderLoader()
+          <LoaderComponent />
         ) : (
           <SearchResultsComponent
             searchResults={searchResults}
