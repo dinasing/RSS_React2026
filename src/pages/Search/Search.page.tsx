@@ -20,6 +20,11 @@ const emptySearchResults: SearchResultsType = {
   docs: [],
 };
 
+type BooksRequest = {
+  query: string | null;
+  page: number;
+};
+
 const getQueryFromLocalStorage = () => trimQuery(localStorage.getItem('query'));
 
 const setQueryToLocalStorage = (query: string) => {
@@ -30,88 +35,86 @@ const removeQueryFromLocalStorage = () => {
   localStorage.removeItem('query');
 };
 
+const isSameRequest = (a: BooksRequest, b: BooksRequest) =>
+  a.query === b.query && a.page === b.page;
+
 const SearchPage = () => {
+  const [query, setQuery] = useState<string | null>(() => {
+    const saved = getQueryFromLocalStorage();
+    return saved || null;
+  });
+  const [page, setPage] = useState(1);
   const [searchResults, setSearchResults] = useState<SearchResultsType>(
     {} as SearchResultsType
   );
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const searchResultsRef = useRef(searchResults);
+  const loadedRequestRef = useRef<BooksRequest | null>(null);
 
-  useEffect(() => {
-    searchResultsRef.current = searchResults;
-  }, [searchResults]);
+  const loadBooks = useCallback(async (request: BooksRequest) => {
+    if (
+      loadedRequestRef.current &&
+      isSameRequest(loadedRequestRef.current, request)
+    ) {
+      return;
+    }
 
-  const handleDefaultBooks = useCallback(async () => {
     setIsLoading(true);
     setErrorMessage(null);
 
     try {
-      const results = await getDefaultBooks();
+      const results = request.query
+        ? await searchBooks(request.query, request.page)
+        : await getDefaultBooks(request.page);
+      loadedRequestRef.current = request;
       setSearchResults(results);
-      setIsLoading(false);
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
-          : 'Cannot load default books. Please try again.';
+          : request.query
+            ? 'Search request failed. Please try again.'
+            : 'Cannot load default books. Please try again.';
       setErrorMessage(message);
-      setIsLoading(false);
       setSearchResults(emptySearchResults);
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
-  const handleSearch = useCallback(
-    async (query: string) => {
-      const trimmedQuery = trimQuery(query);
-
-      if (!trimmedQuery) {
-        if (getQueryFromLocalStorage()) {
-          await handleDefaultBooks();
-          removeQueryFromLocalStorage();
-        }
-
-        return;
-      }
-
-      if (
-        getQueryFromLocalStorage() === trimmedQuery &&
-        searchResultsRef.current.numFound
-      ) {
-        return;
-      }
-
-      setQueryToLocalStorage(trimmedQuery);
-      setIsLoading(true);
-      setErrorMessage(null);
-
-      try {
-        const results = await searchBooks(trimmedQuery);
-        setSearchResults(results);
-        setIsLoading(false);
-      } catch (error) {
-        const message =
-          error instanceof Error
-            ? error.message
-            : 'Search request failed. Please try again.';
-        setErrorMessage(message);
-        setIsLoading(false);
-        setSearchResults(emptySearchResults);
-      }
-    },
-    [handleDefaultBooks]
-  );
-
   useEffect(() => {
-    const query = getQueryFromLocalStorage();
     startTransition(() => {
-      if (query) {
-        void handleSearch(query);
-      } else {
-        void handleDefaultBooks();
-      }
+      void loadBooks({ query, page });
     });
-  }, [handleDefaultBooks, handleSearch]);
+  }, [loadBooks, query, page]);
+
+  const handleSearch = (inputQuery: string) => {
+    const trimmedQuery = trimQuery(inputQuery);
+
+    if (!trimmedQuery) {
+      if (query) {
+        removeQueryFromLocalStorage();
+        setQuery(null);
+        setPage(1);
+      }
+
+      return;
+    }
+
+    setQueryToLocalStorage(trimmedQuery);
+
+    if (trimmedQuery === query && page === 1) {
+      return;
+    }
+
+    if (trimmedQuery !== query) {
+      setQuery(trimmedQuery);
+    }
+
+    if (page !== 1) {
+      setPage(1);
+    }
+  };
 
   const renderLoader = () => (
     <div
@@ -123,8 +126,6 @@ const SearchPage = () => {
       </div>
     </div>
   );
-
-  const query = getQueryFromLocalStorage();
 
   return (
     <section className="flex flex-col gap-6">
@@ -142,7 +143,12 @@ const SearchPage = () => {
         {isLoading ? (
           renderLoader()
         ) : (
-          <SearchResultsComponent searchResults={searchResults} />
+          <SearchResultsComponent
+            searchResults={searchResults}
+            page={page}
+            onPrevious={() => setPage(page - 1)}
+            onNext={() => setPage(page + 1)}
+          />
         )}
         <ErrorButtonComponent />
       </ErrorBoundaryComponent>

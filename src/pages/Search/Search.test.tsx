@@ -63,7 +63,7 @@ describe('SearchPage', () => {
     render(<SearchPage />);
 
     expect(screen.getByDisplayValue('react')).toBeInTheDocument();
-    expect(booksApi.searchBooks).toHaveBeenCalledWith('react');
+    expect(booksApi.searchBooks).toHaveBeenCalledWith('react', 1);
     expect(await screen.findByText(mockBookSearch.title)).toBeInTheDocument();
   });
 
@@ -98,7 +98,7 @@ describe('SearchPage', () => {
       screen.getByRole('button', { name: /search for a book/i })
     );
 
-    expect(booksApi.searchBooks).toHaveBeenCalledWith('vue');
+    expect(booksApi.searchBooks).toHaveBeenCalledWith('vue', 1);
     expect(localStorage.getItem('query')).toBe('vue');
     expect(await screen.findByText(mockBookSearch.title)).toBeInTheDocument();
   });

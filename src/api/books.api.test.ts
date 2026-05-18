@@ -13,7 +13,7 @@ describe('books.api', () => {
   });
 
   describe('searchBooks', () => {
-    it('requests the first page with default limit and offset', async () => {
+    it('requests the first page with default limit and page', async () => {
       fetchMock.mockResolvedValue({
         ok: true,
         json: async () => ({ numFound: 0, docs: [] }),
@@ -22,12 +22,12 @@ describe('books.api', () => {
       await searchBooks('react');
 
       expect(fetchMock).toHaveBeenCalledWith(
-        'https://openlibrary.org/search.json?q=react&limit=10&offset=0',
+        'https://openlibrary.org/search.json?q=react&limit=10&page=1',
         expect.any(Object)
       );
     });
 
-    it('supports custom limit and offset', async () => {
+    it('supports custom limit and page', async () => {
       fetchMock.mockResolvedValue({
         ok: true,
         json: async () => ({ numFound: 0, docs: [] }),
@@ -36,7 +36,7 @@ describe('books.api', () => {
       await searchBooks('vue', 5, 10);
 
       expect(fetchMock).toHaveBeenCalledWith(
-        'https://openlibrary.org/search.json?q=vue&limit=5&offset=10',
+        'https://openlibrary.org/search.json?q=vue&limit=10&page=5',
         expect.any(Object)
       );
     });
@@ -77,7 +77,7 @@ describe('books.api', () => {
 
       await expect(getDefaultBooks()).resolves.toEqual(payload);
       expect(fetchMock).toHaveBeenCalledWith(
-        'https://openlibrary.org/search.json?q=subject:fiction&limit=10&offset=0',
+        'https://openlibrary.org/search.json?q=subject:fiction&limit=10&page=1',
         expect.any(Object)
       );
     });

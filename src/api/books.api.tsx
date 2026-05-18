@@ -11,12 +11,12 @@ const options = {
 
 export const searchBooks = async (
   query: string,
-  limit: number = 10,
-  offset: number = 0
+  page: number = 1,
+  limit: number = 10
 ) => {
   try {
     const response = await fetch(
-      `${BASE_URL}search.json?q=${query}&limit=${limit}&offset=${offset}`,
+      `${BASE_URL}search.json?q=${query}&limit=${limit}&page=${page}`,
       options
     );
 
@@ -34,4 +34,5 @@ export const searchBooks = async (
   }
 };
 
-export const getDefaultBooks = () => searchBooks('subject:fiction');
+export const getDefaultBooks = (page: number = 1) =>
+  searchBooks('subject:fiction', page);
