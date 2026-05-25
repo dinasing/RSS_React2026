@@ -4,8 +4,8 @@ import GoHome from '../../components/GoHome/GoHome.component';
 const About = () => (
   <>
     <div className="flex flex-col gap-6">
-      <h1 className="text-3xl font-bold text-white">About page</h1>
-      <p className="text-lg text-white">
+      <h1 className="text-3xl font-bold">About page</h1>
+      <p className="text-lg">
         This is a simple app that allows you to search for books using the{' '}
         <Link
           className="text-blue-500 hover:text-blue-600 bg-white px-2 py-1 rounded-md"
@@ -15,7 +15,7 @@ const About = () => (
         </Link>{' '}
         API
       </p>
-      <p className="text-md text-white">
+      <p className="text-md">
         Author: dinasing{' '}
         <Link
           className="text-blue-500 hover:text-blue-600 bg-white px-2 py-1 rounded-md"
@@ -24,7 +24,7 @@ const About = () => (
           GitHub
         </Link>
       </p>
-      <p className="text-lg text-white">
+      <p className="text-lg">
         This app was implemented as part of the{' '}
         <Link
           className="text-blue-500 hover:text-blue-600 bg-white px-2 py-1 rounded-md"

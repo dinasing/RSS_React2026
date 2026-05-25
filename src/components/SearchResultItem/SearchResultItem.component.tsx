@@ -24,12 +24,12 @@ const SearchResultItemComponent = ({
   );
 
   const renderFirstPublishYear = () => (
-    <p>({first_publish_year || 'Unknown year'})</p>
+    <p className="text-neutral-700">({first_publish_year || 'Unknown year'})</p>
   );
 
   return (
     <article
-      className={`w-full rounded-md bg-white p-4 text-left
+      className={`w-full rounded-md bg-white p-4 text-left text-neutral-900
           flex flex-row items-start gap-4
           ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
     >
