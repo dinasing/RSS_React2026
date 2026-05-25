@@ -25,7 +25,7 @@ const SearchFormComponent = ({
       />
       <button
         type="submit"
-        className="bg-white rounded-md p-2"
+        className="bg-white text-neutral-900 rounded-md p-2"
         aria-label="Search for a book"
       >
         Search

@@ -1,5 +1,14 @@
 @import 'tailwindcss';
 
+@utility bg-flannel-solid {
+  background-color: #07151f;
+}
+
+/* Darkest tone from flannel checkers: #1e83c2 under rgba(0, 0, 0, 0.6) */
+@utility bg-flannel-dark {
+  background-color: #0c344e;
+}
+
 @utility bg-flannel {
   background-color: #1e83c2;
 
@@ -17,5 +26,25 @@
       transparent 64px,
       rgba(0, 0, 0, 0.6) 64px,
       rgba(0, 0, 0, 0.6) 128px
+    );
+}
+
+@utility bg-flannel-light {
+  background-color: #f8fafc;
+
+  background-image:
+    repeating-linear-gradient(
+      15deg,
+      transparent,
+      transparent 64px,
+      rgba(15, 23, 42, 0.03) 64px,
+      rgba(15, 23, 42, 0.03) 128px
+    ),
+    repeating-linear-gradient(
+      115deg,
+      transparent,
+      transparent 64px,
+      rgba(15, 23, 42, 0.03) 64px,
+      rgba(15, 23, 42, 0.03) 128px
     );
 }

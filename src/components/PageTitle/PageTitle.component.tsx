@@ -5,7 +5,7 @@ type PageTitleComponentProps = {
 const PageTitleComponent = ({ title }: PageTitleComponentProps) => {
   return (
     <div className="space-y-2">
-      <h1 className="text-3xl font-bold text-white">{title}</h1>
+      <h1 className="text-3xl font-bold">{title}</h1>
     </div>
   );
 };

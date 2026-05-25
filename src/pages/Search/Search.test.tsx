@@ -1,13 +1,17 @@
+import { configureStore } from '@reduxjs/toolkit';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { Provider } from 'react-redux';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import * as booksApi from '../../api/books.api';
+import { ThemeProvider } from '../../context/Theme/Theme.context';
+import { selectedItemsReducer } from '../../store/selectedItems/selectedItems.slice';
 import {
   mockBook,
   mockBookDetails,
   mockBookSearch,
-  mockSearchResults,
   mockDefaultResults,
+  mockSearchResults,
 } from '../../test-utils/fixtures';
 import BookDetailsPage from '../BookDetails/BookDetails.page';
 import SearchPage from './Search.page';
@@ -19,6 +23,11 @@ vi.mock('../../api/books.api', () => ({
 }));
 
 function renderSearchPage(initialEntry = '/') {
+  const store = configureStore({
+    reducer: {
+      selectedItems: selectedItemsReducer,
+    },
+  });
   const router = createMemoryRouter(
     [
       {
@@ -32,7 +41,16 @@ function renderSearchPage(initialEntry = '/') {
     }
   );
 
-  return { router, ...render(<RouterProvider router={router} />) };
+  return {
+    router,
+    ...render(
+      <ThemeProvider>
+        <Provider store={store}>
+          <RouterProvider router={router} />
+        </Provider>
+      </ThemeProvider>
+    ),
+  };
 }
 
 function createDeferred<T>() {
@@ -256,6 +274,10 @@ describe('SearchPage', () => {
 
     const { router } = renderSearchPage();
     await screen.findByText(mockBook.title);
+    const checkbox = screen.getByRole('checkbox', {
+      name: new RegExp(`select ${mockBook.title}`, 'i'),
+    });
+    expect(checkbox).not.toBeChecked();
 
     await user.click(
       screen.getByRole('button', { name: new RegExp(mockBook.title) })
@@ -266,10 +288,133 @@ describe('SearchPage', () => {
     expect(
       await screen.findByRole('heading', { name: mockBookDetails.title })
     ).toBeInTheDocument();
+    expect(checkbox).not.toBeChecked();
     expect(booksApi.getBookDetails).toHaveBeenCalledWith('/works/OL1W');
     expect(screen.getAllByText(mockBook.title).length).toBeGreaterThanOrEqual(
       1
     );
+  });
+
+  it('toggles checkbox selection without opening details', async () => {
+    const user = userEvent.setup();
+    vi.mocked(booksApi.getDefaultBooks).mockResolvedValue(mockDefaultResults);
+    vi.mocked(booksApi.getBookDetails).mockResolvedValue(mockBookDetails);
+
+    const { router } = renderSearchPage();
+    await screen.findByText(mockBook.title);
+
+    const checkbox = screen.getByRole('checkbox', {
+      name: new RegExp(`select ${mockBook.title}`, 'i'),
+    });
+
+    await user.click(checkbox);
+
+    expect(checkbox).toBeChecked();
+    expect(router.state.location.search).toBe('');
+    expect(screen.queryByLabelText(/book details/i)).not.toBeInTheDocument();
+    expect(booksApi.getBookDetails).not.toHaveBeenCalled();
+  });
+
+  it('shows sticky flyout for selected items and unselects all', async () => {
+    const user = userEvent.setup();
+    vi.mocked(booksApi.getDefaultBooks).mockResolvedValue(mockDefaultResults);
+
+    renderSearchPage();
+    await screen.findByText(mockBook.title);
+
+    const checkbox = screen.getByRole('checkbox', {
+      name: new RegExp(`select ${mockBook.title}`, 'i'),
+    });
+
+    await user.click(checkbox);
+
+    expect(checkbox).toBeChecked();
+    expect(screen.getByText('1 selected')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /unselect all/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /download/i })
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /unselect all/i }));
+
+    expect(checkbox).not.toBeChecked();
+    expect(screen.queryByText('1 selected')).not.toBeInTheDocument();
+  });
+
+  it('downloads selected items as csv from the flyout action', async () => {
+    const user = userEvent.setup();
+    vi.mocked(booksApi.getDefaultBooks).mockResolvedValue(mockDefaultResults);
+
+    renderSearchPage();
+    await screen.findByText(mockBook.title);
+
+    await user.click(
+      screen.getByRole('checkbox', {
+        name: new RegExp(`select ${mockBook.title}`, 'i'),
+      })
+    );
+
+    const createObjectURLMock = vi.fn<[Blob], string>(
+      () => 'blob:download-url'
+    );
+    const revokeObjectURLMock = vi.fn();
+    const originalCreateObjectURL = URL.createObjectURL;
+    const originalRevokeObjectURL = URL.revokeObjectURL;
+    const anchorClickSpy = vi
+      .spyOn(HTMLAnchorElement.prototype, 'click')
+      .mockImplementation(() => undefined);
+    const removeChildSpy = vi.spyOn(document.body, 'removeChild');
+
+    Object.defineProperty(URL, 'createObjectURL', {
+      configurable: true,
+      writable: true,
+      value: createObjectURLMock,
+    });
+    Object.defineProperty(URL, 'revokeObjectURL', {
+      configurable: true,
+      writable: true,
+      value: revokeObjectURLMock,
+    });
+
+    try {
+      await user.click(screen.getByRole('button', { name: /download/i }));
+
+      expect(anchorClickSpy).toHaveBeenCalledTimes(1);
+      expect(createObjectURLMock).toHaveBeenCalledWith(expect.any(Blob));
+      expect(revokeObjectURLMock).toHaveBeenCalledWith('blob:download-url');
+
+      const csvBlob = createObjectURLMock.mock.calls[0]?.[0];
+      expect(csvBlob).toBeInstanceOf(Blob);
+      if (!(csvBlob instanceof Blob)) {
+        throw new Error('CSV blob was not created');
+      }
+      const csvContent = await csvBlob.text();
+      expect(csvContent).toContain('name,description,detailsUrl');
+      expect(csvContent).toContain('Test Book,Jane Author (2001)');
+      expect(csvContent).toContain('https://openlibrary.org/works/OL1W');
+
+      const removedNode = removeChildSpy.mock.calls.at(0)?.[0];
+      expect(removedNode).toBeInstanceOf(HTMLAnchorElement);
+      expect((removedNode as HTMLAnchorElement).download).toBe('1_items.csv');
+      expect((removedNode as HTMLAnchorElement).href).toContain(
+        'blob:download-url'
+      );
+    } finally {
+      Object.defineProperty(URL, 'createObjectURL', {
+        configurable: true,
+        writable: true,
+        value: originalCreateObjectURL,
+      });
+      Object.defineProperty(URL, 'revokeObjectURL', {
+        configurable: true,
+        writable: true,
+        value: originalRevokeObjectURL,
+      });
+      anchorClickSpy.mockRestore();
+      removeChildSpy.mockRestore();
+    }
   });
 
   it('shows loading text while book details are loading', async () => {

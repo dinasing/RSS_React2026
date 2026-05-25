@@ -1,16 +1,32 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import type { ComponentProps } from 'react';
+import userEvent from '@testing-library/user-event';
+import { ThemeProvider } from '../../context/Theme/Theme.context';
 import { mockBook } from '../../test-utils/fixtures';
 import type { SearchResultItemType } from '../../types/searchResultItem.type';
 import SearchResultItemComponent from './SearchResultItem.component';
 
+const renderSearchResultItem = (
+  props: ComponentProps<typeof SearchResultItemComponent>
+) =>
+  render(
+    <ThemeProvider>
+      <SearchResultItemComponent {...props} />
+    </ThemeProvider>
+  );
+
 describe('SearchResultItemComponent', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    document.documentElement.removeAttribute('data-theme');
+  });
+
   it('renders title, authors, year, and cover image', () => {
-    render(
-      <SearchResultItemComponent
-        searchResultItem={mockBook}
-        onSelect={() => {}}
-      />
-    );
+    renderSearchResultItem({
+      searchResultItem: mockBook,
+      onToggleSelect: () => {},
+      onOpenDetails: () => {},
+    });
 
     expect(screen.getByText(mockBook.title)).toBeInTheDocument();
     expect(
@@ -27,9 +43,11 @@ describe('SearchResultItemComponent', () => {
       ...mockBook,
       author_name: [],
     };
-    render(
-      <SearchResultItemComponent searchResultItem={item} onSelect={() => {}} />
-    );
+    renderSearchResultItem({
+      searchResultItem: item,
+      onToggleSelect: () => {},
+      onOpenDetails: () => {},
+    });
 
     expect(screen.getByText(/unknown author/i)).toBeInTheDocument();
   });
@@ -39,9 +57,11 @@ describe('SearchResultItemComponent', () => {
       ...mockBook,
       first_publish_year: undefined,
     } as unknown as SearchResultItemType;
-    render(
-      <SearchResultItemComponent searchResultItem={item} onSelect={() => {}} />
-    );
+    renderSearchResultItem({
+      searchResultItem: item,
+      onToggleSelect: () => {},
+      onOpenDetails: () => {},
+    });
 
     expect(screen.getByText(/unknown year/i)).toBeInTheDocument();
   });
@@ -51,21 +71,22 @@ describe('SearchResultItemComponent', () => {
       ...mockBook,
       cover_i: undefined,
     } as unknown as SearchResultItemType;
-    render(
-      <SearchResultItemComponent searchResultItem={item} onSelect={() => {}} />
-    );
+    renderSearchResultItem({
+      searchResultItem: item,
+      onToggleSelect: () => {},
+      onOpenDetails: () => {},
+    });
 
     expect(screen.getByText('📖')).toBeInTheDocument();
     expect(screen.queryByAltText('Book cover')).not.toBeInTheDocument();
   });
 
   it('shows placeholder after image load error', () => {
-    render(
-      <SearchResultItemComponent
-        searchResultItem={mockBook}
-        onSelect={() => {}}
-      />
-    );
+    renderSearchResultItem({
+      searchResultItem: mockBook,
+      onToggleSelect: () => {},
+      onOpenDetails: () => {},
+    });
 
     fireEvent.error(screen.getByAltText('Book cover'));
 
@@ -73,12 +94,11 @@ describe('SearchResultItemComponent', () => {
   });
 
   it('shows cover again after cover_i changes', () => {
-    const { rerender } = render(
-      <SearchResultItemComponent
-        searchResultItem={mockBook}
-        onSelect={() => {}}
-      />
-    );
+    const { rerender } = renderSearchResultItem({
+      searchResultItem: mockBook,
+      onToggleSelect: () => {},
+      onOpenDetails: () => {},
+    });
 
     fireEvent.error(screen.getByAltText('Book cover'));
     expect(screen.getByText('📖')).toBeInTheDocument();
@@ -88,12 +108,70 @@ describe('SearchResultItemComponent', () => {
       cover_i: 999999,
     };
     rerender(
-      <SearchResultItemComponent
-        searchResultItem={nextItem}
-        onSelect={() => {}}
-      />
+      <ThemeProvider>
+        <SearchResultItemComponent
+          searchResultItem={nextItem}
+          onToggleSelect={() => {}}
+          onOpenDetails={() => {}}
+        />
+      </ThemeProvider>
     );
 
     expect(screen.getByAltText('Book cover')).toBeInTheDocument();
+  });
+
+  it('toggles selection when checkbox is clicked', async () => {
+    const user = userEvent.setup();
+    const onToggleSelect = vi.fn();
+    const onOpenDetails = vi.fn();
+
+    renderSearchResultItem({
+      searchResultItem: mockBook,
+      onToggleSelect,
+      onOpenDetails,
+    });
+
+    await user.click(
+      screen.getByRole('checkbox', {
+        name: new RegExp(`select ${mockBook.title}`, 'i'),
+      })
+    );
+
+    expect(onToggleSelect).toHaveBeenCalledWith(mockBook);
+    expect(onOpenDetails).not.toHaveBeenCalled();
+  });
+
+  it('opens details when card area is clicked', async () => {
+    const user = userEvent.setup();
+    const onToggleSelect = vi.fn();
+    const onOpenDetails = vi.fn();
+
+    renderSearchResultItem({
+      searchResultItem: mockBook,
+      onToggleSelect,
+      onOpenDetails,
+    });
+
+    await user.click(
+      screen.getByRole('button', { name: new RegExp(mockBook.title, 'i') })
+    );
+
+    expect(onOpenDetails).toHaveBeenCalledWith(mockBook.key);
+    expect(onToggleSelect).not.toHaveBeenCalled();
+  });
+
+  it('uses flannel background and light text in dark theme', () => {
+    localStorage.setItem('theme', 'dark');
+
+    renderSearchResultItem({
+      searchResultItem: mockBook,
+      onToggleSelect: () => {},
+      onOpenDetails: () => {},
+    });
+
+    const card = screen.getByRole('article');
+    expect(card).toHaveClass('bg-flannel-solid');
+    expect(card).toHaveClass('text-white');
+    expect(screen.getByText(mockBook.title)).toHaveClass('text-white');
   });
 });

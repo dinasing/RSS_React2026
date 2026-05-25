@@ -6,8 +6,9 @@ import SearchResultItemComponent from '../SearchResultItem/SearchResultItem.comp
 type SearchResultsComponentProps = {
   searchResults: SearchResultsType;
   page: number;
-  selectedWorkKey: string | null;
-  onItemSelect: (workKey: string) => void;
+  isItemSelected: (workKey: string) => boolean;
+  onItemToggleSelect: (item: SearchResultItemType) => void;
+  onItemOpenDetails: (workKey: string) => void;
   onPrevious: () => void;
   onNext: () => void;
 };
@@ -15,8 +16,9 @@ type SearchResultsComponentProps = {
 const SearchResultsComponent = ({
   searchResults,
   page,
-  selectedWorkKey,
-  onItemSelect,
+  isItemSelected,
+  onItemToggleSelect,
+  onItemOpenDetails,
   onPrevious,
   onNext,
 }: SearchResultsComponentProps) => (
@@ -30,8 +32,9 @@ const SearchResultsComponent = ({
           <SearchResultItemComponent
             key={searchResultItem.key}
             searchResultItem={searchResultItem}
-            isSelected={selectedWorkKey === searchResultItem.key}
-            onSelect={onItemSelect}
+            isSelected={isItemSelected(searchResultItem.key)}
+            onToggleSelect={onItemToggleSelect}
+            onOpenDetails={onItemOpenDetails}
           />
         ))}
     </div>

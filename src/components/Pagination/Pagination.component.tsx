@@ -31,7 +31,7 @@ const PaginationComponent = (props: PaginationComponentProps) => {
   );
 
   const renderPageNumber = () => (
-    <span className="text-white font-bold text-lg">{page}</span>
+    <span className="font-bold text-lg">{page}</span>
   );
 
   return (

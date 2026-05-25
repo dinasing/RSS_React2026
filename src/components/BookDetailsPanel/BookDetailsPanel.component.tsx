@@ -7,6 +7,7 @@ import {
 } from 'react';
 import { useSearchParams } from 'react-router';
 import { getBookDetails } from '../../api/books.api';
+import { THEME_DARK, useTheme } from '../../context/Theme/Theme.shared';
 import type { BookDetailsType } from '../../types/bookDetails.type';
 import { formatBookDescription } from '../../util/bookDescription.util';
 import { buildDetailsSearchParams } from '../../util/detailsSearchParam.util';
@@ -19,6 +20,8 @@ type BookDetailsPanelProps = {
 };
 
 const BookDetailsPanelComponent = ({ workKey }: BookDetailsPanelProps) => {
+  const { theme } = useTheme();
+  const isDarkTheme = theme === THEME_DARK;
   const [, setSearchParams] = useSearchParams();
   const [bookDetails, setBookDetails] = useState<BookDetailsType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -62,10 +65,18 @@ const BookDetailsPanelComponent = ({ workKey }: BookDetailsPanelProps) => {
     });
   }, [loadDetails, workKey]);
 
+  const closeButtonClassName = isDarkTheme
+    ? 'text-white hover:bg-white/10'
+    : 'text-neutral-700 hover:bg-neutral-100';
+  const mutedTextClassName = isDarkTheme ? 'text-blue-100' : 'text-neutral-600';
+  const panelClassName = isDarkTheme
+    ? 'bg-flannel-dark text-white'
+    : 'bg-white text-neutral-900';
+
   const renderCloseButton = () => (
     <button
       type="button"
-      className="absolute top-3 right-3 rounded px-2 py-1 text-sm font-medium text-neutral-700 hover:bg-neutral-100"
+      className={`absolute top-3 right-3 rounded px-2 py-1 text-sm font-medium ${closeButtonClassName}`}
       aria-label="Close details"
       onClick={closeDetails}
     >
@@ -75,7 +86,7 @@ const BookDetailsPanelComponent = ({ workKey }: BookDetailsPanelProps) => {
 
   const renderLoader = () =>
     isLoading ? (
-      <p className="mt-8 text-center text-neutral-600 italic">
+      <p className={`mt-8 text-center italic ${mutedTextClassName}`}>
         Loading book details...
       </p>
     ) : null;
@@ -85,7 +96,7 @@ const BookDetailsPanelComponent = ({ workKey }: BookDetailsPanelProps) => {
 
   const renderPublishDate = (firstPublishDate?: string) =>
     firstPublishDate ? (
-      <p className="text-sm text-neutral-600">
+      <p className={`text-sm ${mutedTextClassName}`}>
         First published: {firstPublishDate}
       </p>
     ) : null;
@@ -94,12 +105,14 @@ const BookDetailsPanelComponent = ({ workKey }: BookDetailsPanelProps) => {
     description ? (
       <p className="text-sm leading-relaxed">{description}</p>
     ) : (
-      <p className="text-sm text-neutral-600">No description available.</p>
+      <p className={`text-sm ${mutedTextClassName}`}>
+        No description available.
+      </p>
     );
 
   const renderSubjects = (subjects?: string[]) =>
     subjects && subjects.length > 0 ? (
-      <p className="text-sm text-neutral-600">
+      <p className={`text-sm ${mutedTextClassName}`}>
         Subjects: {subjects.slice(0, 8).join(', ')}
       </p>
     ) : null;
@@ -119,7 +132,11 @@ const BookDetailsPanelComponent = ({ workKey }: BookDetailsPanelProps) => {
           imageClassName="h-[180px] w-[120px] self-center rounded object-cover bg-neutral-100"
           placeholderClassName="h-[180px] w-[120px] self-center rounded"
         />
-        <BookTitleComponent title={bookDetails.title} variant="details" />
+        <BookTitleComponent
+          title={bookDetails.title}
+          variant="details"
+          className={isDarkTheme ? 'text-white' : undefined}
+        />
         {renderPublishDate(bookDetails.first_publish_date)}
         {renderDescription(description)}
         {renderSubjects(bookDetails.subjects)}
@@ -129,7 +146,7 @@ const BookDetailsPanelComponent = ({ workKey }: BookDetailsPanelProps) => {
 
   return (
     <section
-      className="relative flex h-full min-h-[320px] flex-col gap-4 rounded-md bg-white p-4 text-neutral-900"
+      className={`relative flex h-full min-h-[320px] flex-col gap-4 rounded-md p-4 ${panelClassName}`}
       aria-label="Book details"
       onClick={(event) => event.stopPropagation()}
     >

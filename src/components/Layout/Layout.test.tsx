@@ -1,17 +1,26 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
+import { ThemeProvider } from '../../context/Theme/Theme.context';
 import Layout from './Layout.component';
 
 describe('Layout', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    document.documentElement.removeAttribute('data-theme');
+    document.documentElement.classList.remove('dark');
+  });
+
   it('renders navigation and outlet content', () => {
     render(
-      <MemoryRouter initialEntries={['/']}>
-        <Routes>
-          <Route path="/" element={<Layout />}>
-            <Route index element={<p>Page content</p>} />
-          </Route>
-        </Routes>
-      </MemoryRouter>
+      <ThemeProvider>
+        <MemoryRouter initialEntries={['/']}>
+          <Routes>
+            <Route path="/" element={<Layout />}>
+              <Route index element={<p>Page content</p>} />
+            </Route>
+          </Routes>
+        </MemoryRouter>
+      </ThemeProvider>
     );
 
     expect(screen.getByRole('navigation')).toBeInTheDocument();
