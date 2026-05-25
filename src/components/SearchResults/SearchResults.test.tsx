@@ -1,20 +1,29 @@
 import { render, screen } from '@testing-library/react';
+import type { ComponentProps } from 'react';
+import { ThemeProvider } from '../../context/Theme/Theme.context';
 import { mockBook, mockBookSearch } from '../../test-utils/fixtures';
 import SearchResultsComponent from './SearchResults.component';
 
+const renderSearchResults = (
+  props: ComponentProps<typeof SearchResultsComponent>
+) =>
+  render(
+    <ThemeProvider>
+      <SearchResultsComponent {...props} />
+    </ThemeProvider>
+  );
+
 describe('SearchResultsComponent', () => {
   it('shows no results message when numFound is 0', () => {
-    render(
-      <SearchResultsComponent
-        searchResults={{ numFound: 0, start: 0, docs: [] }}
-        page={1}
-        isItemSelected={() => false}
-        onItemToggleSelect={() => {}}
-        onItemOpenDetails={() => {}}
-        onPrevious={() => {}}
-        onNext={() => {}}
-      />
-    );
+    renderSearchResults({
+      searchResults: { numFound: 0, start: 0, docs: [] },
+      page: 1,
+      isItemSelected: () => false,
+      onItemToggleSelect: () => {},
+      onItemOpenDetails: () => {},
+      onPrevious: () => {},
+      onNext: () => {},
+    });
 
     expect(screen.getByText(/no results found/i)).toBeInTheDocument();
     expect(
@@ -26,21 +35,19 @@ describe('SearchResultsComponent', () => {
   });
 
   it('renders each result with name and author text', () => {
-    render(
-      <SearchResultsComponent
-        searchResults={{
-          numFound: 2,
-          start: 0,
-          docs: [mockBook, mockBookSearch],
-        }}
-        page={1}
-        isItemSelected={() => false}
-        onItemToggleSelect={() => {}}
-        onItemOpenDetails={() => {}}
-        onPrevious={() => {}}
-        onNext={() => {}}
-      />
-    );
+    renderSearchResults({
+      searchResults: {
+        numFound: 2,
+        start: 0,
+        docs: [mockBook, mockBookSearch],
+      },
+      page: 1,
+      isItemSelected: () => false,
+      onItemToggleSelect: () => {},
+      onItemOpenDetails: () => {},
+      onPrevious: () => {},
+      onNext: () => {},
+    });
 
     expect(screen.getByText(mockBook.title)).toBeInTheDocument();
     expect(

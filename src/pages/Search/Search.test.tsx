@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import * as booksApi from '../../api/books.api';
+import { ThemeProvider } from '../../context/Theme/Theme.context';
 import { selectedItemsReducer } from '../../store/selectedItems/selectedItems.slice';
 import {
   mockBook,
@@ -43,9 +44,11 @@ function renderSearchPage(initialEntry = '/') {
   return {
     router,
     ...render(
-      <Provider store={store}>
-        <RouterProvider router={router} />
-      </Provider>
+      <ThemeProvider>
+        <Provider store={store}>
+          <RouterProvider router={router} />
+        </Provider>
+      </ThemeProvider>
     ),
   };
 }
@@ -353,7 +356,9 @@ describe('SearchPage', () => {
       })
     );
 
-    const createObjectURLMock = vi.fn(() => 'blob:download-url');
+    const createObjectURLMock = vi.fn<[Blob], string>(
+      () => 'blob:download-url'
+    );
     const revokeObjectURLMock = vi.fn();
     const originalCreateObjectURL = URL.createObjectURL;
     const originalRevokeObjectURL = URL.revokeObjectURL;
@@ -380,13 +385,7 @@ describe('SearchPage', () => {
       expect(createObjectURLMock).toHaveBeenCalledWith(expect.any(Blob));
       expect(revokeObjectURLMock).toHaveBeenCalledWith('blob:download-url');
 
-      const firstCreateObjectUrlCall = createObjectURLMock.mock.calls.at(0);
-      expect(firstCreateObjectUrlCall).toBeDefined();
-      if (!firstCreateObjectUrlCall) {
-        throw new Error('createObjectURL was not called');
-      }
-
-      const csvBlob = firstCreateObjectUrlCall[0];
+      const csvBlob = createObjectURLMock.mock.calls[0]?.[0];
       expect(csvBlob).toBeInstanceOf(Blob);
       if (!(csvBlob instanceof Blob)) {
         throw new Error('CSV blob was not created');

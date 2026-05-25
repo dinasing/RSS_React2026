@@ -1,5 +1,14 @@
 @import 'tailwindcss';
 
+@utility bg-flannel-solid {
+  background-color: #07151f;
+}
+
+/* Darkest tone from flannel checkers: #1e83c2 under rgba(0, 0, 0, 0.6) */
+@utility bg-flannel-dark {
+  background-color: #0c344e;
+}
+
 @utility bg-flannel {
   background-color: #1e83c2;
 
