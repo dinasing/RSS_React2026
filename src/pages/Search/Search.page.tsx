@@ -18,10 +18,17 @@ import { useLocalStorage } from '../../hooks/useLocalStorage/useLocalStorage.hoo
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
   selectSelectedItemsByKey,
+  selectSelectedItemsCount,
+  selectSelectedItemsList,
   toggleItem,
+  unselectAll,
 } from '../../store/selectedItems/selectedItems.slice';
 import type { SearchResultItemType } from '../../types/searchResultItem.type';
 import type { SearchResultsType } from '../../types/searchResults.type';
+import {
+  buildSelectedItemsCsv,
+  buildSelectedItemsCsvFilename,
+} from '../../util/csv.util';
 import {
   buildDetailsSearchParams,
   fromDetailsParam,
@@ -51,6 +58,8 @@ const isSameRequest = (a: BooksRequest, b: BooksRequest) =>
 const SearchPage = () => {
   const dispatch = useAppDispatch();
   const selectedItemsByKey = useAppSelector(selectSelectedItemsByKey);
+  const selectedItemsList = useAppSelector(selectSelectedItemsList);
+  const selectedItemsCount = useAppSelector(selectSelectedItemsCount);
   const [searchParams, setSearchParams] = useSearchParams();
   const page = parsePageParam(searchParams.get('page'));
   const selectedWorkKey = fromDetailsParam(searchParams.get('details'));
@@ -87,6 +96,29 @@ const SearchPage = () => {
 
   const handleItemToggleSelect = (item: SearchResultItemType) => {
     dispatch(toggleItem(item));
+  };
+
+  const handleUnselectAll = () => {
+    dispatch(unselectAll());
+  };
+
+  const handleDownloadSelected = () => {
+    if (selectedItemsCount === 0) {
+      return;
+    }
+
+    const csvContent = buildSelectedItemsCsv(selectedItemsList);
+    const fileName = buildSelectedItemsCsvFilename(selectedItemsCount);
+    const csvBlob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const csvUrl = URL.createObjectURL(csvBlob);
+    const downloadLink = document.createElement('a');
+
+    downloadLink.href = csvUrl;
+    downloadLink.download = fileName;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+    URL.revokeObjectURL(csvUrl);
   };
 
   const isItemSelected = useCallback(
@@ -200,6 +232,29 @@ const SearchPage = () => {
           </aside>
         ) : null}
       </div>
+      {selectedItemsCount > 0 ? (
+        <div className="fixed inset-x-0 bottom-4 z-20 px-4">
+          <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 rounded-md bg-slate-900 px-4 py-3 text-white shadow-lg">
+            <p className="font-semibold">{selectedItemsCount} selected</p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="rounded-md border border-white px-3 py-2 text-sm font-semibold hover:bg-slate-700"
+                onClick={handleUnselectAll}
+              >
+                Unselect all
+              </button>
+              <button
+                type="button"
+                className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-200"
+                onClick={handleDownloadSelected}
+              >
+                Download
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 };
