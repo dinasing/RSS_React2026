@@ -15,6 +15,12 @@ import PageTitleComponent from '../../components/PageTitle/PageTitle.component';
 import SearchFormComponent from '../../components/SearchForm/SearchForm.component';
 import SearchResultsComponent from '../../components/SearchResults/SearchResults.component';
 import { useLocalStorage } from '../../hooks/useLocalStorage/useLocalStorage.hook';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import {
+  selectSelectedItemsByKey,
+  toggleItem,
+} from '../../store/selectedItems/selectedItems.slice';
+import type { SearchResultItemType } from '../../types/searchResultItem.type';
 import type { SearchResultsType } from '../../types/searchResults.type';
 import {
   buildDetailsSearchParams,
@@ -43,6 +49,8 @@ const isSameRequest = (a: BooksRequest, b: BooksRequest) =>
   a.query === b.query && a.page === b.page;
 
 const SearchPage = () => {
+  const dispatch = useAppDispatch();
+  const selectedItemsByKey = useAppSelector(selectSelectedItemsByKey);
   const [searchParams, setSearchParams] = useSearchParams();
   const page = parsePageParam(searchParams.get('page'));
   const selectedWorkKey = fromDetailsParam(searchParams.get('details'));
@@ -76,6 +84,15 @@ const SearchPage = () => {
       closeDetails();
     }
   };
+
+  const handleItemToggleSelect = (item: SearchResultItemType) => {
+    dispatch(toggleItem(item));
+  };
+
+  const isItemSelected = useCallback(
+    (workKey: string) => Boolean(selectedItemsByKey[workKey]),
+    [selectedItemsByKey]
+  );
 
   const setPage = (newPage: number) => {
     const validPage = Math.max(1, newPage);
@@ -167,8 +184,9 @@ const SearchPage = () => {
               <SearchResultsComponent
                 searchResults={searchResults}
                 page={page}
-                selectedWorkKey={selectedWorkKey}
-                onItemSelect={openDetails}
+                isItemSelected={isItemSelected}
+                onItemToggleSelect={handleItemToggleSelect}
+                onItemOpenDetails={openDetails}
                 onPrevious={() => setPage(page - 1)}
                 onNext={() => setPage(page + 1)}
               />

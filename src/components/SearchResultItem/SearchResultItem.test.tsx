@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { mockBook } from '../../test-utils/fixtures';
 import type { SearchResultItemType } from '../../types/searchResultItem.type';
 import SearchResultItemComponent from './SearchResultItem.component';
@@ -8,7 +9,8 @@ describe('SearchResultItemComponent', () => {
     render(
       <SearchResultItemComponent
         searchResultItem={mockBook}
-        onSelect={() => {}}
+        onToggleSelect={() => {}}
+        onOpenDetails={() => {}}
       />
     );
 
@@ -28,7 +30,11 @@ describe('SearchResultItemComponent', () => {
       author_name: [],
     };
     render(
-      <SearchResultItemComponent searchResultItem={item} onSelect={() => {}} />
+      <SearchResultItemComponent
+        searchResultItem={item}
+        onToggleSelect={() => {}}
+        onOpenDetails={() => {}}
+      />
     );
 
     expect(screen.getByText(/unknown author/i)).toBeInTheDocument();
@@ -40,7 +46,11 @@ describe('SearchResultItemComponent', () => {
       first_publish_year: undefined,
     } as unknown as SearchResultItemType;
     render(
-      <SearchResultItemComponent searchResultItem={item} onSelect={() => {}} />
+      <SearchResultItemComponent
+        searchResultItem={item}
+        onToggleSelect={() => {}}
+        onOpenDetails={() => {}}
+      />
     );
 
     expect(screen.getByText(/unknown year/i)).toBeInTheDocument();
@@ -52,7 +62,11 @@ describe('SearchResultItemComponent', () => {
       cover_i: undefined,
     } as unknown as SearchResultItemType;
     render(
-      <SearchResultItemComponent searchResultItem={item} onSelect={() => {}} />
+      <SearchResultItemComponent
+        searchResultItem={item}
+        onToggleSelect={() => {}}
+        onOpenDetails={() => {}}
+      />
     );
 
     expect(screen.getByText('📖')).toBeInTheDocument();
@@ -63,7 +77,8 @@ describe('SearchResultItemComponent', () => {
     render(
       <SearchResultItemComponent
         searchResultItem={mockBook}
-        onSelect={() => {}}
+        onToggleSelect={() => {}}
+        onOpenDetails={() => {}}
       />
     );
 
@@ -76,7 +91,8 @@ describe('SearchResultItemComponent', () => {
     const { rerender } = render(
       <SearchResultItemComponent
         searchResultItem={mockBook}
-        onSelect={() => {}}
+        onToggleSelect={() => {}}
+        onOpenDetails={() => {}}
       />
     );
 
@@ -90,10 +106,55 @@ describe('SearchResultItemComponent', () => {
     rerender(
       <SearchResultItemComponent
         searchResultItem={nextItem}
-        onSelect={() => {}}
+        onToggleSelect={() => {}}
+        onOpenDetails={() => {}}
       />
     );
 
     expect(screen.getByAltText('Book cover')).toBeInTheDocument();
+  });
+
+  it('toggles selection when checkbox is clicked', async () => {
+    const user = userEvent.setup();
+    const onToggleSelect = vi.fn();
+    const onOpenDetails = vi.fn();
+
+    render(
+      <SearchResultItemComponent
+        searchResultItem={mockBook}
+        onToggleSelect={onToggleSelect}
+        onOpenDetails={onOpenDetails}
+      />
+    );
+
+    await user.click(
+      screen.getByRole('checkbox', {
+        name: new RegExp(`select ${mockBook.title}`, 'i'),
+      })
+    );
+
+    expect(onToggleSelect).toHaveBeenCalledWith(mockBook);
+    expect(onOpenDetails).not.toHaveBeenCalled();
+  });
+
+  it('opens details when card area is clicked', async () => {
+    const user = userEvent.setup();
+    const onToggleSelect = vi.fn();
+    const onOpenDetails = vi.fn();
+
+    render(
+      <SearchResultItemComponent
+        searchResultItem={mockBook}
+        onToggleSelect={onToggleSelect}
+        onOpenDetails={onOpenDetails}
+      />
+    );
+
+    await user.click(
+      screen.getByRole('button', { name: new RegExp(mockBook.title, 'i') })
+    );
+
+    expect(onOpenDetails).toHaveBeenCalledWith(mockBook.key);
+    expect(onToggleSelect).not.toHaveBeenCalled();
   });
 });

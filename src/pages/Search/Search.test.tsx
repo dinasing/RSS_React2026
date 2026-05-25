@@ -1,7 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { configureStore } from '@reduxjs/toolkit';
+import { Provider } from 'react-redux';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import * as booksApi from '../../api/books.api';
+import { selectedItemsReducer } from '../../store/selectedItems/selectedItems.slice';
 import {
   mockBook,
   mockBookDetails,
@@ -19,6 +22,11 @@ vi.mock('../../api/books.api', () => ({
 }));
 
 function renderSearchPage(initialEntry = '/') {
+  const store = configureStore({
+    reducer: {
+      selectedItems: selectedItemsReducer,
+    },
+  });
   const router = createMemoryRouter(
     [
       {
@@ -32,7 +40,14 @@ function renderSearchPage(initialEntry = '/') {
     }
   );
 
-  return { router, ...render(<RouterProvider router={router} />) };
+  return {
+    router,
+    ...render(
+      <Provider store={store}>
+        <RouterProvider router={router} />
+      </Provider>
+    ),
+  };
 }
 
 function createDeferred<T>() {
@@ -256,6 +271,10 @@ describe('SearchPage', () => {
 
     const { router } = renderSearchPage();
     await screen.findByText(mockBook.title);
+    const checkbox = screen.getByRole('checkbox', {
+      name: new RegExp(`select ${mockBook.title}`, 'i'),
+    });
+    expect(checkbox).not.toBeChecked();
 
     await user.click(
       screen.getByRole('button', { name: new RegExp(mockBook.title) })
@@ -266,10 +285,31 @@ describe('SearchPage', () => {
     expect(
       await screen.findByRole('heading', { name: mockBookDetails.title })
     ).toBeInTheDocument();
+    expect(checkbox).not.toBeChecked();
     expect(booksApi.getBookDetails).toHaveBeenCalledWith('/works/OL1W');
     expect(screen.getAllByText(mockBook.title).length).toBeGreaterThanOrEqual(
       1
     );
+  });
+
+  it('toggles checkbox selection without opening details', async () => {
+    const user = userEvent.setup();
+    vi.mocked(booksApi.getDefaultBooks).mockResolvedValue(mockDefaultResults);
+    vi.mocked(booksApi.getBookDetails).mockResolvedValue(mockBookDetails);
+
+    const { router } = renderSearchPage();
+    await screen.findByText(mockBook.title);
+
+    const checkbox = screen.getByRole('checkbox', {
+      name: new RegExp(`select ${mockBook.title}`, 'i'),
+    });
+
+    await user.click(checkbox);
+
+    expect(checkbox).toBeChecked();
+    expect(router.state.location.search).toBe('');
+    expect(screen.queryByLabelText(/book details/i)).not.toBeInTheDocument();
+    expect(booksApi.getBookDetails).not.toHaveBeenCalled();
   });
 
   it('shows loading text while book details are loading', async () => {

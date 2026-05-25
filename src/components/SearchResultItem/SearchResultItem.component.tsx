@@ -5,13 +5,15 @@ import BookTitleComponent from '../BookTitle/BookTitle.component';
 type SearchResultItemProps = {
   searchResultItem: SearchResultItemType;
   isSelected?: boolean;
-  onSelect: (workKey: string) => void;
+  onToggleSelect: (item: SearchResultItemType) => void;
+  onOpenDetails: (workKey: string) => void;
 };
 
 const SearchResultItemComponent = ({
   searchResultItem,
   isSelected = false,
-  onSelect,
+  onToggleSelect,
+  onOpenDetails,
 }: SearchResultItemProps) => {
   const { title, author_name, first_publish_year, cover_i } = searchResultItem;
 
@@ -26,19 +28,31 @@ const SearchResultItemComponent = ({
   );
 
   return (
-    <button
-      type="button"
-      onClick={(event) => {
-        event.stopPropagation();
-        onSelect(searchResultItem.key);
-      }}
-      aria-pressed={isSelected}
-      className={`w-full cursor-pointer rounded-md bg-white p-4 text-left
-          flex flex-row items-center justify-between gap-4
+    <article
+      className={`w-full rounded-md bg-white p-4 text-left
+          flex flex-row items-start gap-4
           ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
     >
-      <div className="grid grid-cols-[80px_1fr] gap-2">
-        <div>
+      <input
+        type="checkbox"
+        checked={isSelected}
+        aria-label={`Select ${title}`}
+        className="h-4 w-4 cursor-pointer"
+        onClick={(event) => event.stopPropagation()}
+        onChange={(event) => {
+          event.stopPropagation();
+          onToggleSelect(searchResultItem);
+        }}
+      />
+      <button
+        type="button"
+        onClick={(event) => {
+          event.stopPropagation();
+          onOpenDetails(searchResultItem.key);
+        }}
+        className="grid flex-1 cursor-pointer grid-cols-[80px_1fr] gap-2 text-left"
+      >
+        <div aria-hidden="true">
           <BookCoverComponent coverId={cover_i} />
         </div>
         <div>
@@ -46,8 +60,8 @@ const SearchResultItemComponent = ({
           {renderAuthorName()}
           {renderFirstPublishYear()}
         </div>
-      </div>
-    </button>
+      </button>
+    </article>
   );
 };
 

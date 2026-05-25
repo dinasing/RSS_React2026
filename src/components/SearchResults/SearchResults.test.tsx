@@ -8,8 +8,9 @@ describe('SearchResultsComponent', () => {
       <SearchResultsComponent
         searchResults={{ numFound: 0, start: 0, docs: [] }}
         page={1}
-        selectedWorkKey={null}
-        onItemSelect={() => {}}
+        isItemSelected={() => false}
+        onItemToggleSelect={() => {}}
+        onItemOpenDetails={() => {}}
         onPrevious={() => {}}
         onNext={() => {}}
       />
@@ -33,8 +34,9 @@ describe('SearchResultsComponent', () => {
           docs: [mockBook, mockBookSearch],
         }}
         page={1}
-        selectedWorkKey={null}
-        onItemSelect={() => {}}
+        isItemSelected={() => false}
+        onItemToggleSelect={() => {}}
+        onItemOpenDetails={() => {}}
         onPrevious={() => {}}
         onNext={() => {}}
       />
