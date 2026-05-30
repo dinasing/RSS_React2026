@@ -38,10 +38,11 @@ export const getDefaultBooks = (page: number = 1) =>
   searchBooks('subject:fiction', page);
 
 export const getBookDetails = async (workKey: string) => {
-  const path = workKey.startsWith('/') ? workKey.slice(1) : `works/${workKey}`;
-
   try {
-    const response = await fetch(`${BASE_URL}${path}.json`, options);
+    const response = await fetch(
+      `${BASE_URL}${workKey.slice(1)}.json`,
+      options
+    );
 
     if (!response.ok) {
       throw new Error('Cannot load book details. Please try again.');

@@ -27,10 +27,6 @@ function getBookListTagId(query: string | null, page: number): string {
   return `${query ?? 'default'}-${page}`;
 }
 
-function normalizeWorkPath(workKey: string): string {
-  return workKey.startsWith('/') ? workKey.slice(1) : `works/${workKey}`;
-}
-
 export const booksApi = createApi({
   reducerPath: 'booksApi',
   baseQuery,
@@ -58,7 +54,7 @@ export const booksApi = createApi({
       },
     }),
     getBookDetails: builder.query<BookDetailsType, string>({
-      query: (workKey) => `${normalizeWorkPath(workKey)}.json`,
+      query: (workKey) => `${workKey.slice(1)}.json`,
       providesTags: (_result, _error, workKey) => [
         { type: 'BookDetails', id: workKey },
       ],

@@ -1,9 +1,7 @@
 const WORK_KEY_PREFIX = '/works/';
 
 export const toDetailsParam = (workKey: string): string =>
-  workKey.startsWith(WORK_KEY_PREFIX)
-    ? workKey.slice(WORK_KEY_PREFIX.length)
-    : workKey;
+  workKey.slice(WORK_KEY_PREFIX.length);
 
 export const fromDetailsParam = (param: string | null): string | null =>
   param ? `${WORK_KEY_PREFIX}${param}` : null;
