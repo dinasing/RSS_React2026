@@ -1,16 +1,10 @@
-import {
-  startTransition,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
 import { useSearchParams } from 'react-router';
-import { getBookDetails } from '../../api/books.api';
 import { THEME_DARK, useTheme } from '../../context/Theme/Theme.shared';
-import type { BookDetailsType } from '../../types/bookDetails.type';
+import { booksApi, useGetBookDetailsQuery } from '../../store/api/booksApi';
+import { useAppDispatch } from '../../store/hooks';
 import { formatBookDescription } from '../../util/bookDescription.util';
 import { buildDetailsSearchParams } from '../../util/detailsSearchParam.util';
+import { getQueryErrorMessage } from '../../util/queryError.util';
 import BookCoverComponent from '../BookCover/BookCover.component';
 import BookTitleComponent from '../BookTitle/BookTitle.component';
 import ErrorMessageComponent from '../ErrorMessage/ErrorMessage.component';
@@ -20,13 +14,23 @@ type BookDetailsPanelProps = {
 };
 
 const BookDetailsPanelComponent = ({ workKey }: BookDetailsPanelProps) => {
+  const dispatch = useAppDispatch();
   const { theme } = useTheme();
   const isDarkTheme = theme === THEME_DARK;
   const [, setSearchParams] = useSearchParams();
-  const [bookDetails, setBookDetails] = useState<BookDetailsType | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const loadedWorkKeyRef = useRef<string | null>(null);
+  const {
+    data: bookDetails,
+    isLoading,
+    isFetching,
+    error,
+    refetch,
+  } = useGetBookDetailsQuery(workKey);
+
+  const showLoader = isLoading || (isFetching && !bookDetails);
+  const errorMessage = getQueryErrorMessage(
+    error,
+    'Cannot load book details. Please try again.'
+  );
 
   const closeDetails = () => {
     setSearchParams((current) => buildDetailsSearchParams(current, null), {
@@ -34,36 +38,12 @@ const BookDetailsPanelComponent = ({ workKey }: BookDetailsPanelProps) => {
     });
   };
 
-  const loadDetails = useCallback(async (key: string) => {
-    if (loadedWorkKeyRef.current === key) {
-      return;
-    }
-
-    setIsLoading(true);
-    setErrorMessage(null);
-    setBookDetails(null);
-
-    try {
-      const details = await getBookDetails(key);
-      loadedWorkKeyRef.current = key;
-      setBookDetails(details);
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : 'Cannot load book details. Please try again.';
-      setErrorMessage(message);
-      loadedWorkKeyRef.current = null;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    startTransition(() => {
-      void loadDetails(workKey);
-    });
-  }, [loadDetails, workKey]);
+  const handleRefresh = () => {
+    dispatch(
+      booksApi.util.invalidateTags([{ type: 'BookDetails', id: workKey }])
+    );
+    void refetch();
+  };
 
   const closeButtonClassName = isDarkTheme
     ? 'text-white hover:bg-white/10'
@@ -73,19 +53,29 @@ const BookDetailsPanelComponent = ({ workKey }: BookDetailsPanelProps) => {
     ? 'bg-flannel-dark text-white'
     : 'bg-white text-neutral-900';
 
-  const renderCloseButton = () => (
-    <button
-      type="button"
-      className={`absolute top-3 right-3 rounded px-2 py-1 text-sm font-medium ${closeButtonClassName}`}
-      aria-label="Close details"
-      onClick={closeDetails}
-    >
-      Close
-    </button>
+  const renderHeaderActions = () => (
+    <div className="absolute top-3 right-3 flex items-center gap-2">
+      <button
+        type="button"
+        className={`rounded px-2 py-1 text-sm font-medium ${closeButtonClassName}`}
+        aria-label="Refresh details"
+        onClick={handleRefresh}
+      >
+        Refresh
+      </button>
+      <button
+        type="button"
+        className={`rounded px-2 py-1 text-sm font-medium ${closeButtonClassName}`}
+        aria-label="Close details"
+        onClick={closeDetails}
+      >
+        Close
+      </button>
+    </div>
   );
 
   const renderLoader = () =>
-    isLoading ? (
+    showLoader ? (
       <p className={`mt-8 text-center italic ${mutedTextClassName}`}>
         Loading book details...
       </p>
@@ -118,7 +108,7 @@ const BookDetailsPanelComponent = ({ workKey }: BookDetailsPanelProps) => {
     ) : null;
 
   const renderContent = () => {
-    if (isLoading || errorMessage || !bookDetails) {
+    if (showLoader || errorMessage || !bookDetails) {
       return null;
     }
 
@@ -150,7 +140,7 @@ const BookDetailsPanelComponent = ({ workKey }: BookDetailsPanelProps) => {
       aria-label="Book details"
       onClick={(event) => event.stopPropagation()}
     >
-      {renderCloseButton()}
+      {renderHeaderActions()}
       {renderLoader()}
       {renderError()}
       {renderContent()}
