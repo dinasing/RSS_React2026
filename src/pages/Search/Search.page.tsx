@@ -1,12 +1,5 @@
-import {
-  startTransition,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import { useCallback } from 'react';
 import { Outlet, useSearchParams } from 'react-router';
-import { getDefaultBooks, searchBooks } from '../../api/books.api';
 import ErrorBoundaryComponent from '../../components/ErrorBoundary/ErrorBoundary.component';
 import ErrorButtonComponent from '../../components/ErrorButton/ErrorButton.component';
 import ErrorMessageComponent from '../../components/ErrorMessage/ErrorMessage.component';
@@ -15,6 +8,7 @@ import PageTitleComponent from '../../components/PageTitle/PageTitle.component';
 import SearchFormComponent from '../../components/SearchForm/SearchForm.component';
 import SearchResultsComponent from '../../components/SearchResults/SearchResults.component';
 import { useLocalStorage } from '../../hooks/useLocalStorage/useLocalStorage.hook';
+import { booksApi, useGetBooksQuery } from '../../store/api/booksApi';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
   selectSelectedItemsByKey,
@@ -37,6 +31,7 @@ import {
   buildPageSearchParams,
   parsePageParam,
 } from '../../util/pageSearchParam.util';
+import { getQueryErrorMessage } from '../../util/queryError.util';
 import { trimQuery } from '../../util/trimQuery.util';
 
 const emptySearchResults: SearchResultsType = {
@@ -45,15 +40,7 @@ const emptySearchResults: SearchResultsType = {
   docs: [],
 };
 
-type BooksRequest = {
-  query: string | null;
-  page: number;
-};
-
 const QUERY_STORAGE_KEY = 'query';
-
-const isSameRequest = (a: BooksRequest, b: BooksRequest) =>
-  a.query === b.query && a.page === b.page;
 
 const SearchPage = () => {
   const dispatch = useAppDispatch();
@@ -69,12 +56,19 @@ const SearchPage = () => {
     null
   );
   const query = storedQuery === null ? null : trimQuery(storedQuery) || null;
-  const [searchResults, setSearchResults] = useState<SearchResultsType>(
-    {} as SearchResultsType
+  const { data, isLoading, isFetching, error, refetch } = useGetBooksQuery({
+    query,
+    page,
+  });
+
+  const searchResults = data ?? emptySearchResults;
+  const showLoader = isLoading || (isFetching && !data);
+  const errorMessage = getQueryErrorMessage(
+    error,
+    query
+      ? 'Search request failed. Please try again.'
+      : 'Cannot load default books. Please try again.'
   );
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const loadedRequestRef = useRef<BooksRequest | null>(null);
 
   const openDetails = (workKey: string) => {
     setSearchParams((current) => buildDetailsSearchParams(current, workKey), {
@@ -121,6 +115,15 @@ const SearchPage = () => {
     URL.revokeObjectURL(csvUrl);
   };
 
+  const handleRefresh = () => {
+    dispatch(
+      booksApi.util.invalidateTags([
+        { type: 'BookList', id: `${query ?? 'default'}-${page}` },
+      ])
+    );
+    void refetch();
+  };
+
   const isItemSelected = useCallback(
     (workKey: string) => Boolean(selectedItemsByKey[workKey]),
     [selectedItemsByKey]
@@ -132,43 +135,6 @@ const SearchPage = () => {
       replace: false,
     });
   };
-
-  const loadBooks = useCallback(async (request: BooksRequest) => {
-    if (
-      loadedRequestRef.current &&
-      isSameRequest(loadedRequestRef.current, request)
-    ) {
-      return;
-    }
-
-    setIsLoading(true);
-    setErrorMessage(null);
-
-    try {
-      const results = request.query
-        ? await searchBooks(request.query, request.page)
-        : await getDefaultBooks(request.page);
-      loadedRequestRef.current = request;
-      setSearchResults(results);
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : request.query
-            ? 'Search request failed. Please try again.'
-            : 'Cannot load default books. Please try again.';
-      setErrorMessage(message);
-      setSearchResults(emptySearchResults);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    startTransition(() => {
-      void loadBooks({ query, page });
-    });
-  }, [loadBooks, query, page]);
 
   const handleSearch = (inputQuery: string) => {
     const trimmedQuery = trimQuery(inputQuery);
@@ -197,7 +163,17 @@ const SearchPage = () => {
 
   return (
     <section className="flex flex-col gap-6">
-      <PageTitleComponent title="Book search!" />
+      <div className="flex items-center justify-between gap-4">
+        <PageTitleComponent title="Book search!" />
+        <button
+          type="button"
+          className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold hover:bg-slate-100"
+          aria-label="Refresh results"
+          onClick={handleRefresh}
+        >
+          Refresh
+        </button>
+      </div>
       <div
         className={`flex gap-6 ${hasDetails ? 'flex-col md:flex-row' : 'flex-col'}`}
       >
@@ -210,7 +186,7 @@ const SearchPage = () => {
             <ErrorMessageComponent message={errorMessage} />
           ) : null}
           <ErrorBoundaryComponent>
-            {isLoading ? (
+            {showLoader ? (
               <LoaderComponent />
             ) : (
               <SearchResultsComponent
