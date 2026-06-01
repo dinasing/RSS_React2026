@@ -54,7 +54,12 @@ export const booksApi = createApi({
       },
     }),
     getBookDetails: builder.query<BookDetailsType, string>({
-      query: (workKey) => `${workKey.slice(1)}.json`,
+      query: (workKey) => {
+        const path = workKey.startsWith('/')
+          ? workKey.slice(1)
+          : `works/${workKey}`;
+        return `${path}.json`;
+      },
       providesTags: (_result, _error, workKey) => [
         { type: 'BookDetails', id: workKey },
       ],

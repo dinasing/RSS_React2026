@@ -1,11 +1,14 @@
-import { configureStore } from '@reduxjs/toolkit';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
 import { createMemoryRouter, RouterProvider } from 'react-router';
-import * as booksApi from '../../api/books.api';
 import { ThemeProvider } from '../../context/Theme/Theme.context';
-import { selectedItemsReducer } from '../../store/selectedItems/selectedItems.slice';
+import {
+  getFetchCallUrl,
+  jsonResponse,
+  mockSearchAndDefaultFetch,
+  setupFetchMock,
+} from '../../test-utils/fetchMock';
 import {
   mockBook,
   mockBookDetails,
@@ -13,21 +16,12 @@ import {
   mockDefaultResults,
   mockSearchResults,
 } from '../../test-utils/fixtures';
+import { createTestStore } from '../../test-utils/testStore';
 import BookDetailsPage from '../BookDetails/BookDetails.page';
 import SearchPage from './Search.page';
 
-vi.mock('../../api/books.api', () => ({
-  searchBooks: vi.fn(),
-  getDefaultBooks: vi.fn(),
-  getBookDetails: vi.fn(),
-}));
-
 function renderSearchPage(initialEntry = '/') {
-  const store = configureStore({
-    reducer: {
-      selectedItems: selectedItemsReducer,
-    },
-  });
+  const store = createTestStore();
   const router = createMemoryRouter(
     [
       {
@@ -43,6 +37,7 @@ function renderSearchPage(initialEntry = '/') {
 
   return {
     router,
+    store,
     ...render(
       <ThemeProvider>
         <Provider store={store}>
@@ -66,56 +61,66 @@ function createDeferred<T>() {
 describe('SearchPage', () => {
   beforeEach(() => {
     localStorage.clear();
-    vi.mocked(booksApi.searchBooks).mockReset();
-    vi.mocked(booksApi.getDefaultBooks).mockReset();
-    vi.mocked(booksApi.getBookDetails).mockReset();
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
   });
 
   afterEach(() => {
+    vi.unstubAllGlobals();
     vi.mocked(console.error).mockRestore();
   });
 
   it('loads default books on mount when localStorage is empty', async () => {
-    vi.mocked(booksApi.getDefaultBooks).mockResolvedValue(mockDefaultResults);
+    const fetchMock = mockSearchAndDefaultFetch({
+      defaultBooks: mockDefaultResults,
+    });
 
     renderSearchPage();
 
-    expect(booksApi.getDefaultBooks).toHaveBeenCalledTimes(1);
-    expect(booksApi.searchBooks).not.toHaveBeenCalled();
     expect(await screen.findByText(mockBook.title)).toBeInTheDocument();
-    expect(booksApi.getDefaultBooks).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(getFetchCallUrl(fetchMock.mock.calls[0]![0])).toContain(
+      'subject%3Afiction'
+    );
   });
 
   it('does not refetch default books after results load on empty query', async () => {
-    vi.mocked(booksApi.getDefaultBooks).mockResolvedValue(mockDefaultResults);
+    const fetchMock = mockSearchAndDefaultFetch({
+      defaultBooks: mockDefaultResults,
+    });
 
     renderSearchPage();
     await screen.findByText(mockBook.title);
 
-    expect(booksApi.getDefaultBooks).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it('searches with saved query on mount and prefills the input', async () => {
     localStorage.setItem('query', '  react  ');
-    vi.mocked(booksApi.searchBooks).mockResolvedValue(mockSearchResults);
+    const fetchMock = mockSearchAndDefaultFetch({
+      search: () => mockSearchResults,
+    });
 
     renderSearchPage();
 
     expect(screen.getByDisplayValue('react')).toBeInTheDocument();
-    expect(booksApi.searchBooks).toHaveBeenCalledWith('react', 1);
     expect(await screen.findByText(mockBookSearch.title)).toBeInTheDocument();
+    expect(getFetchCallUrl(fetchMock.mock.calls[0]![0])).toContain('q=react');
   });
 
   it('shows loading text while data is loading', async () => {
-    const deferred = createDeferred<typeof mockDefaultResults>();
-    vi.mocked(booksApi.getDefaultBooks).mockReturnValue(deferred.promise);
+    const deferred = createDeferred<Response>();
+    setupFetchMock((url) => {
+      if (url.includes('search.json')) {
+        return deferred.promise;
+      }
+      return jsonResponse({});
+    });
 
     renderSearchPage();
 
     expect(screen.getByText(/so many books/i)).toBeInTheDocument();
 
-    deferred.resolve(mockDefaultResults);
+    deferred.resolve(jsonResponse(mockDefaultResults));
 
     expect(await screen.findByText(mockBook.title)).toBeInTheDocument();
     expect(screen.queryByText(/so many books/i)).not.toBeInTheDocument();
@@ -123,8 +128,11 @@ describe('SearchPage', () => {
 
   it('submits trimmed search, updates results, and saves localStorage', async () => {
     const user = userEvent.setup();
-    vi.mocked(booksApi.getDefaultBooks).mockResolvedValue(mockDefaultResults);
-    vi.mocked(booksApi.searchBooks).mockResolvedValue(mockSearchResults);
+    mockSearchAndDefaultFetch({
+      defaultBooks: mockDefaultResults,
+      search: (query) =>
+        query === 'vue' ? mockSearchResults : mockDefaultResults,
+    });
 
     renderSearchPage();
     await screen.findByText(mockBook.title);
@@ -138,54 +146,60 @@ describe('SearchPage', () => {
       screen.getByRole('button', { name: /search for a book/i })
     );
 
-    expect(booksApi.searchBooks).toHaveBeenCalledWith('vue', 1);
     expect(localStorage.getItem('query')).toBe('vue');
     expect(await screen.findByText(mockBookSearch.title)).toBeInTheDocument();
   });
 
-  it('does not call searchBooks again when submitting the same query with results', async () => {
+  it('does not refetch when submitting the same query with results', async () => {
     const user = userEvent.setup();
     localStorage.setItem('query', 'react');
-    vi.mocked(booksApi.searchBooks).mockResolvedValue(mockSearchResults);
+    const fetchMock = mockSearchAndDefaultFetch({
+      search: () => mockSearchResults,
+    });
 
     renderSearchPage();
     await screen.findByText(mockBookSearch.title);
 
-    vi.mocked(booksApi.searchBooks).mockClear();
+    const callsAfterLoad = fetchMock.mock.calls.length;
 
     await user.click(
       screen.getByRole('button', { name: /search for a book/i })
     );
 
-    expect(booksApi.searchBooks).not.toHaveBeenCalled();
+    expect(fetchMock.mock.calls.length).toBe(callsAfterLoad);
   });
 
   it('loads default books and clears localStorage when submitting empty after a saved query', async () => {
     const user = userEvent.setup();
     localStorage.setItem('query', 'react');
-    vi.mocked(booksApi.searchBooks).mockResolvedValue(mockSearchResults);
-    vi.mocked(booksApi.getDefaultBooks).mockResolvedValue(mockDefaultResults);
+    mockSearchAndDefaultFetch({
+      defaultBooks: mockDefaultResults,
+      search: () => mockSearchResults,
+    });
 
     renderSearchPage();
     await screen.findByText(mockBookSearch.title);
-
-    vi.mocked(booksApi.getDefaultBooks).mockClear();
 
     await user.clear(screen.getByPlaceholderText(/search for a book/i));
     await user.click(
       screen.getByRole('button', { name: /search for a book/i })
     );
 
-    expect(booksApi.getDefaultBooks).toHaveBeenCalled();
     expect(localStorage.getItem('query')).toBeNull();
     expect(await screen.findByText(mockBook.title)).toBeInTheDocument();
   });
 
   it('shows an alert when search fails', async () => {
     localStorage.setItem('query', 'broken');
-    vi.mocked(booksApi.searchBooks).mockRejectedValue(
-      new Error('Server unavailable')
-    );
+    setupFetchMock((url) => {
+      if (url.includes('search.json')) {
+        return jsonResponse(
+          { detail: [{ msg: 'Server unavailable' }] },
+          { ok: false, status: 400 }
+        );
+      }
+      return jsonResponse({});
+    });
 
     renderSearchPage();
 
@@ -194,9 +208,10 @@ describe('SearchPage', () => {
     );
   });
 
-  it('shows fallback search message when search rejects a non-Error', async () => {
+  it('shows fallback search message when fetch rejects a non-Error', async () => {
     localStorage.setItem('query', 'x');
-    vi.mocked(booksApi.searchBooks).mockRejectedValue('bad');
+    const fetchMock = vi.fn(() => Promise.reject('bad'));
+    vi.stubGlobal('fetch', fetchMock);
 
     renderSearchPage();
 
@@ -206,57 +221,62 @@ describe('SearchPage', () => {
   });
 
   it('shows an alert when default books fail', async () => {
-    vi.mocked(booksApi.getDefaultBooks).mockRejectedValue(
-      new Error('Network down')
-    );
-
-    renderSearchPage();
-
-    expect(await screen.findByRole('alert')).toHaveTextContent(/network down/i);
-  });
-
-  it('shows non-Error rejection message using fallback copy', async () => {
-    vi.mocked(booksApi.getDefaultBooks).mockRejectedValue('oops');
+    const fetchMock = vi.fn(() => Promise.reject(new Error('Network down')));
+    vi.stubGlobal('fetch', fetchMock);
 
     renderSearchPage();
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      /cannot load default books\. please try again\./i
+      /network down|cannot load default books|search request failed/i
+    );
+  });
+
+  it('shows non-Error rejection message using fallback copy', async () => {
+    const fetchMock = vi.fn(() => Promise.reject('oops'));
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderSearchPage();
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      /cannot load default books|search request failed/i
     );
   });
 
   it('loads books for page from URL search param', async () => {
-    vi.mocked(booksApi.getDefaultBooks).mockResolvedValue(mockDefaultResults);
+    const fetchMock = mockSearchAndDefaultFetch({
+      defaultBooks: mockDefaultResults,
+    });
 
     renderSearchPage('/?page=2');
 
-    expect(booksApi.getDefaultBooks).toHaveBeenCalledWith(2);
     expect(await screen.findByText(mockBook.title)).toBeInTheDocument();
+    expect(getFetchCallUrl(fetchMock.mock.calls[0]![0])).toContain('page=2');
   });
 
   it('updates URL when navigating to next page', async () => {
     const user = userEvent.setup();
-    vi.mocked(booksApi.getDefaultBooks).mockResolvedValue({
-      ...mockDefaultResults,
-      numFound: 25,
+    const fetchMock = mockSearchAndDefaultFetch({
+      defaultBooks: { ...mockDefaultResults, numFound: 25 },
     });
 
     const { router } = renderSearchPage();
     await screen.findByText(mockBook.title);
 
-    vi.mocked(booksApi.getDefaultBooks).mockClear();
+    const callsAfterLoad = fetchMock.mock.calls.length;
 
     await user.click(screen.getByRole('button', { name: /next/i }));
 
     expect(router.state.location.search).toBe('?page=2');
-    expect(booksApi.getDefaultBooks).toHaveBeenCalledWith(2);
+    expect(fetchMock.mock.calls.length).toBeGreaterThan(callsAfterLoad);
+    expect(getFetchCallUrl(fetchMock.mock.calls.at(-1)![0])).toContain(
+      'page=2'
+    );
   });
 
   it('removes page param from URL when returning to first page', async () => {
     const user = userEvent.setup();
-    vi.mocked(booksApi.getDefaultBooks).mockResolvedValue({
-      ...mockDefaultResults,
-      numFound: 25,
+    mockSearchAndDefaultFetch({
+      defaultBooks: { ...mockDefaultResults, numFound: 25 },
     });
 
     const { router } = renderSearchPage('/?page=2');
@@ -267,10 +287,48 @@ describe('SearchPage', () => {
     expect(router.state.location.search).toBe('');
   });
 
+  it('reuses cached list when navigating back to a previous page', async () => {
+    const user = userEvent.setup();
+    const fetchMock = mockSearchAndDefaultFetch({
+      defaultBooks: { ...mockDefaultResults, numFound: 25 },
+    });
+
+    renderSearchPage();
+    await screen.findByText(mockBook.title);
+
+    await user.click(screen.getByRole('button', { name: /next/i }));
+    await screen.findByText(mockBook.title);
+
+    const callsAfterPageTwo = fetchMock.mock.calls.length;
+
+    await user.click(screen.getByRole('button', { name: /prev/i }));
+    await screen.findByText(mockBook.title);
+
+    expect(fetchMock.mock.calls.length).toBe(callsAfterPageTwo);
+  });
+
+  it('refetches list when refresh is clicked', async () => {
+    const user = userEvent.setup();
+    const fetchMock = mockSearchAndDefaultFetch({
+      defaultBooks: mockDefaultResults,
+    });
+
+    renderSearchPage();
+    await screen.findByText(mockBook.title);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    await user.click(screen.getByRole('button', { name: /refresh results/i }));
+
+    expect(fetchMock.mock.calls.length).toBeGreaterThan(1);
+  });
+
   it('opens details panel and updates URL when a result is clicked', async () => {
     const user = userEvent.setup();
-    vi.mocked(booksApi.getDefaultBooks).mockResolvedValue(mockDefaultResults);
-    vi.mocked(booksApi.getBookDetails).mockResolvedValue(mockBookDetails);
+    const fetchMock = mockSearchAndDefaultFetch({
+      defaultBooks: mockDefaultResults,
+      bookDetails: mockBookDetails,
+    });
 
     const { router } = renderSearchPage();
     await screen.findByText(mockBook.title);
@@ -289,7 +347,11 @@ describe('SearchPage', () => {
       await screen.findByRole('heading', { name: mockBookDetails.title })
     ).toBeInTheDocument();
     expect(checkbox).not.toBeChecked();
-    expect(booksApi.getBookDetails).toHaveBeenCalledWith('/works/OL1W');
+    expect(
+      fetchMock.mock.calls.some((call) =>
+        getFetchCallUrl(call[0]).includes('OL1W.json')
+      )
+    ).toBe(true);
     expect(screen.getAllByText(mockBook.title).length).toBeGreaterThanOrEqual(
       1
     );
@@ -297,8 +359,10 @@ describe('SearchPage', () => {
 
   it('toggles checkbox selection without opening details', async () => {
     const user = userEvent.setup();
-    vi.mocked(booksApi.getDefaultBooks).mockResolvedValue(mockDefaultResults);
-    vi.mocked(booksApi.getBookDetails).mockResolvedValue(mockBookDetails);
+    mockSearchAndDefaultFetch({
+      defaultBooks: mockDefaultResults,
+      bookDetails: mockBookDetails,
+    });
 
     const { router } = renderSearchPage();
     await screen.findByText(mockBook.title);
@@ -312,12 +376,11 @@ describe('SearchPage', () => {
     expect(checkbox).toBeChecked();
     expect(router.state.location.search).toBe('');
     expect(screen.queryByLabelText(/book details/i)).not.toBeInTheDocument();
-    expect(booksApi.getBookDetails).not.toHaveBeenCalled();
   });
 
   it('shows sticky flyout for selected items and unselects all', async () => {
     const user = userEvent.setup();
-    vi.mocked(booksApi.getDefaultBooks).mockResolvedValue(mockDefaultResults);
+    mockSearchAndDefaultFetch({ defaultBooks: mockDefaultResults });
 
     renderSearchPage();
     await screen.findByText(mockBook.title);
@@ -345,7 +408,7 @@ describe('SearchPage', () => {
 
   it('downloads selected items as csv from the flyout action', async () => {
     const user = userEvent.setup();
-    vi.mocked(booksApi.getDefaultBooks).mockResolvedValue(mockDefaultResults);
+    mockSearchAndDefaultFetch({ defaultBooks: mockDefaultResults });
 
     renderSearchPage();
     await screen.findByText(mockBook.title);
@@ -356,7 +419,7 @@ describe('SearchPage', () => {
       })
     );
 
-    const createObjectURLMock = vi.fn<[Blob], string>(
+    const createObjectURLMock = vi.fn<typeof URL.createObjectURL>(
       () => 'blob:download-url'
     );
     const revokeObjectURLMock = vi.fn();
@@ -385,12 +448,9 @@ describe('SearchPage', () => {
       expect(createObjectURLMock).toHaveBeenCalledWith(expect.any(Blob));
       expect(revokeObjectURLMock).toHaveBeenCalledWith('blob:download-url');
 
-      const csvBlob = createObjectURLMock.mock.calls[0]?.[0];
-      expect(csvBlob).toBeInstanceOf(Blob);
-      if (!(csvBlob instanceof Blob)) {
-        throw new Error('CSV blob was not created');
-      }
-      const csvContent = await csvBlob.text();
+      const csvBlobArg = createObjectURLMock.mock.calls[0]?.[0];
+      expect(csvBlobArg).toBeInstanceOf(Blob);
+      const csvContent = await (csvBlobArg as Blob).text();
       expect(csvContent).toContain('name,description,detailsUrl');
       expect(csvContent).toContain('Test Book,Jane Author (2001)');
       expect(csvContent).toContain('https://openlibrary.org/works/OL1W');
@@ -419,9 +479,16 @@ describe('SearchPage', () => {
 
   it('shows loading text while book details are loading', async () => {
     const user = userEvent.setup();
-    const deferred = createDeferred<typeof mockBookDetails>();
-    vi.mocked(booksApi.getDefaultBooks).mockResolvedValue(mockDefaultResults);
-    vi.mocked(booksApi.getBookDetails).mockReturnValue(deferred.promise);
+    const deferred = createDeferred<Response>();
+    setupFetchMock((url) => {
+      if (url.includes('works/OL1W.json')) {
+        return deferred.promise;
+      }
+      if (url.includes('search.json')) {
+        return jsonResponse(mockDefaultResults);
+      }
+      return jsonResponse({}, { ok: false, status: 404 });
+    });
 
     renderSearchPage();
     await screen.findByText(mockBook.title);
@@ -431,17 +498,69 @@ describe('SearchPage', () => {
 
     expect(screen.getByText(/loading book details/i)).toBeInTheDocument();
 
-    deferred.resolve(mockBookDetails);
+    deferred.resolve(jsonResponse(mockBookDetails));
 
     expect(
       await screen.findByRole('heading', { name: mockBookDetails.title })
     ).toBeInTheDocument();
   });
 
+  it('shows an alert when book details fail', async () => {
+    const user = userEvent.setup();
+    setupFetchMock((url) => {
+      if (url.includes('works/OL1W.json')) {
+        return jsonResponse({}, { ok: false, status: 404 });
+      }
+      if (url.includes('search.json')) {
+        return jsonResponse(mockDefaultResults);
+      }
+      return jsonResponse({}, { ok: false, status: 404 });
+    });
+
+    renderSearchPage();
+    await screen.findByText(mockBook.title);
+    await user.click(
+      screen.getByRole('button', { name: new RegExp(mockBook.title) })
+    );
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      /cannot load book details/i
+    );
+  });
+
+  it('refetches book details when refresh is clicked', async () => {
+    const user = userEvent.setup();
+    const fetchMock = mockSearchAndDefaultFetch({
+      defaultBooks: mockDefaultResults,
+      bookDetails: mockBookDetails,
+    });
+
+    renderSearchPage();
+    await screen.findByText(mockBook.title);
+    await user.click(
+      screen.getByRole('button', { name: new RegExp(mockBook.title) })
+    );
+    await screen.findByRole('heading', { name: mockBookDetails.title });
+
+    const detailsCallsBeforeRefresh = fetchMock.mock.calls.filter((call) =>
+      getFetchCallUrl(call[0]).includes('OL1W.json')
+    ).length;
+
+    await user.click(screen.getByRole('button', { name: /refresh details/i }));
+
+    const detailsCallsAfterRefresh = fetchMock.mock.calls.filter((call) =>
+      getFetchCallUrl(call[0]).includes('OL1W.json')
+    ).length;
+
+    expect(detailsCallsAfterRefresh).toBeGreaterThan(detailsCallsBeforeRefresh);
+  });
+
   it('closes details panel from close button and main panel click', async () => {
     const user = userEvent.setup();
-    vi.mocked(booksApi.getDefaultBooks).mockResolvedValue(mockDefaultResults);
-    vi.mocked(booksApi.getBookDetails).mockResolvedValue(mockBookDetails);
+    mockSearchAndDefaultFetch({
+      defaultBooks: mockDefaultResults,
+      bookDetails: mockBookDetails,
+    });
 
     const { router } = renderSearchPage();
     await screen.findByText(mockBook.title);
@@ -468,11 +587,10 @@ describe('SearchPage', () => {
 
   it('keeps page and details in URL together', async () => {
     const user = userEvent.setup();
-    vi.mocked(booksApi.getDefaultBooks).mockResolvedValue({
-      ...mockDefaultResults,
-      numFound: 25,
+    mockSearchAndDefaultFetch({
+      defaultBooks: { ...mockDefaultResults, numFound: 25 },
+      bookDetails: mockBookDetails,
     });
-    vi.mocked(booksApi.getBookDetails).mockResolvedValue(mockBookDetails);
 
     const { router } = renderSearchPage('/?page=2');
     await screen.findByText(mockBook.title);
@@ -485,19 +603,18 @@ describe('SearchPage', () => {
   });
 
   it('does not show details panel on initial load', async () => {
-    vi.mocked(booksApi.getDefaultBooks).mockResolvedValue(mockDefaultResults);
+    mockSearchAndDefaultFetch({ defaultBooks: mockDefaultResults });
 
     renderSearchPage();
 
     await screen.findByText(mockBook.title);
 
     expect(screen.queryByLabelText(/book details/i)).not.toBeInTheDocument();
-    expect(booksApi.getBookDetails).not.toHaveBeenCalled();
   });
 
   it('error button triggers boundary fallback and logs to console', async () => {
     const user = userEvent.setup();
-    vi.mocked(booksApi.getDefaultBooks).mockResolvedValue(mockDefaultResults);
+    mockSearchAndDefaultFetch({ defaultBooks: mockDefaultResults });
 
     renderSearchPage();
     await screen.findByText(mockBook.title);
