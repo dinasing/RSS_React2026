@@ -1,4 +1,6 @@
-import { useSearchParams } from 'react-router';
+'use client';
+
+import { useSearchParamsState } from '../../hooks/useSearchParamsState/useSearchParamsState.hook';
 import { THEME_DARK, useTheme } from '../../context/Theme/Theme.shared';
 import { booksApi, useGetBookDetailsQuery } from '../../store/api/booksApi';
 import { useAppDispatch } from '../../store/hooks';
@@ -17,7 +19,7 @@ const BookDetailsPanelComponent = ({ workKey }: BookDetailsPanelProps) => {
   const dispatch = useAppDispatch();
   const { theme } = useTheme();
   const isDarkTheme = theme === THEME_DARK;
-  const [, setSearchParams] = useSearchParams();
+  const [, setSearchParams] = useSearchParamsState();
   const {
     data: bookDetails,
     isLoading,
