@@ -1,5 +1,8 @@
+'use client';
+
 import { useCallback } from 'react';
-import { Outlet, useSearchParams } from 'react-router';
+import { useSearchParamsState } from '../../hooks/useSearchParamsState/useSearchParamsState.hook';
+import BookDetailsPage from '../BookDetails/BookDetails.page';
 import ErrorBoundaryComponent from '../../components/ErrorBoundary/ErrorBoundary.component';
 import ErrorButtonComponent from '../../components/ErrorButton/ErrorButton.component';
 import ErrorMessageComponent from '../../components/ErrorMessage/ErrorMessage.component';
@@ -47,7 +50,7 @@ const SearchPage = () => {
   const selectedItemsByKey = useAppSelector(selectSelectedItemsByKey);
   const selectedItemsList = useAppSelector(selectSelectedItemsList);
   const selectedItemsCount = useAppSelector(selectSelectedItemsCount);
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParamsState();
   const page = parsePageParam(searchParams.get('page'));
   const selectedWorkKey = fromDetailsParam(searchParams.get('details'));
   const hasDetails = selectedWorkKey !== null;
@@ -204,7 +207,7 @@ const SearchPage = () => {
         </div>
         {hasDetails ? (
           <aside className="w-full shrink-0 md:w-1/2">
-            <Outlet />
+            <BookDetailsPage />
           </aside>
         ) : null}
       </div>
