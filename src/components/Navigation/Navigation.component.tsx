@@ -1,25 +1,32 @@
-import { NavLink } from 'react-router';
+'use client';
+
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { THEME_DARK, useTheme } from '../../context/Theme/Theme.shared';
 
 const Navigation = () => {
+  const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
   const isDarkTheme = theme === THEME_DARK;
   const navLinkClassName = isDarkTheme
     ? 'text-white hover:text-blue-200 text-lg'
     : 'text-slate-900 hover:text-blue-700 text-lg';
 
+  const getLinkClassName = (href: string) =>
+    `${navLinkClassName}${pathname === href ? ' font-bold underline' : ''}`;
+
   return (
     <nav className="mx-auto my-4 flex w-full items-center justify-between gap-4">
       <ul className="flex gap-2">
         <li>
-          <NavLink className={navLinkClassName} to="/">
+          <Link className={getLinkClassName('/')} href="/">
             Home
-          </NavLink>
+          </Link>
         </li>
         <li>
-          <NavLink className={navLinkClassName} to="/about">
+          <Link className={getLinkClassName('/about')} href="/about">
             About
-          </NavLink>
+          </Link>
         </li>
       </ul>
       <button
