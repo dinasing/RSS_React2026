@@ -7,6 +7,16 @@ const nextConfig: NextConfig = {
   output: 'export',
   distDir: './dist',
   basePath: '',
+  images: {
+    unoptimized: true,
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'covers.openlibrary.org',
+        pathname: '/b/id/**',
+      },
+    ],
+  },
 };
 
 export default withNextIntl(nextConfig);

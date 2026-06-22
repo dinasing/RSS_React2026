@@ -6,6 +6,7 @@ import BookTitleComponent from '../BookTitle/BookTitle.component';
 type SearchResultItemProps = {
   searchResultItem: SearchResultItemType;
   isSelected?: boolean;
+  isFirstOnPage?: boolean;
   onToggleSelect: (item: SearchResultItemType) => void;
   onOpenDetails: (workKey: string) => void;
 };
@@ -13,6 +14,7 @@ type SearchResultItemProps = {
 const SearchResultItemComponent = ({
   searchResultItem,
   isSelected = false,
+  isFirstOnPage = false,
   onToggleSelect,
   onOpenDetails,
 }: SearchResultItemProps) => {
@@ -62,7 +64,7 @@ const SearchResultItemComponent = ({
         className="grid w-full cursor-pointer grid-cols-[80px_1fr] gap-2 pr-8 text-left"
       >
         <div aria-hidden="true">
-          <BookCoverComponent coverId={cover_i} />
+          <BookCoverComponent coverId={cover_i} priority={isFirstOnPage} />
         </div>
         <div>
           <BookTitleComponent

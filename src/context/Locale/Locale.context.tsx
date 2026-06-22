@@ -1,7 +1,6 @@
 'use client';
 
-import { useMemo, type ReactNode } from 'react';
-import { useLocalStorage } from '../../hooks/useLocalStorage/useLocalStorage.hook';
+import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { defaultLocale, isLocale, type Locale } from '../../i18n/config';
 import {
   LocaleContext,
@@ -13,24 +12,46 @@ type LocaleProviderProps = {
   children: ReactNode;
 };
 
+const readStoredLocale = (): Locale | null => {
+  try {
+    const stored = localStorage.getItem(LOCALE_STORAGE_KEY);
+
+    return stored && isLocale(stored) ? stored : null;
+  } catch {
+    return null;
+  }
+};
+
+const getInitialLocale = (): Locale => {
+  if (typeof window === 'undefined') {
+    return defaultLocale;
+  }
+
+  return readStoredLocale() ?? defaultLocale;
+};
+
 export function LocaleProvider({ children }: LocaleProviderProps) {
-  const [storedLocale, setStoredLocale] = useLocalStorage(
-    LOCALE_STORAGE_KEY,
-    null
-  );
-  const locale =
-    storedLocale && isLocale(storedLocale) ? storedLocale : defaultLocale;
+  const [locale, setLocaleState] = useState<Locale>(getInitialLocale);
+
+  const setLocale = useCallback((nextLocale: Locale) => {
+    setLocaleState(nextLocale);
+
+    try {
+      localStorage.setItem(LOCALE_STORAGE_KEY, nextLocale);
+    } catch {
+      // localStorage may be unavailable
+    }
+  }, []);
+
   const messages = messagesByLocale[locale];
 
   const value = useMemo(
     () => ({
       locale,
       messages,
-      setLocale: (nextLocale: Locale) => {
-        setStoredLocale(nextLocale);
-      },
+      setLocale,
     }),
-    [locale, messages, setStoredLocale]
+    [locale, messages, setLocale]
   );
 
   return (

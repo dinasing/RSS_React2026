@@ -118,6 +118,8 @@ const BookDetailsPanelComponent = ({ workKey }: BookDetailsPanelProps) => {
       <div className="mt-6 flex flex-col gap-4">
         <BookCoverComponent
           coverId={coverId}
+          width={120}
+          height={180}
           imageClassName="h-[180px] w-[120px] self-center rounded object-cover bg-neutral-100"
           placeholderClassName="h-[180px] w-[120px] self-center rounded"
         />

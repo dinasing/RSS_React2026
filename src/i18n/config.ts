@@ -4,6 +4,8 @@ export type Locale = (typeof locales)[number];
 
 export const defaultLocale: Locale = 'en';
 
+export const timeZone = 'UTC';
+
 export const localeLabels: Record<Locale, string> = {
   en: 'English',
   ru: 'Русский',

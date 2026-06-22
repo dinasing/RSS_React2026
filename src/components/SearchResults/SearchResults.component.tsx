@@ -34,15 +34,18 @@ const SearchResultsComponent = ({
       )}
       <div className="flex flex-col gap-4 md:flex-row md:flex-wrap">
         {searchResults.docs &&
-          searchResults.docs.map((searchResultItem: SearchResultItemType) => (
-            <SearchResultItemComponent
-              key={searchResultItem.key}
-              searchResultItem={searchResultItem}
-              isSelected={isItemSelected(searchResultItem.key)}
-              onToggleSelect={onItemToggleSelect}
-              onOpenDetails={onItemOpenDetails}
-            />
-          ))}
+          searchResults.docs.map(
+            (searchResultItem: SearchResultItemType, index: number) => (
+              <SearchResultItemComponent
+                key={searchResultItem.key}
+                searchResultItem={searchResultItem}
+                isSelected={isItemSelected(searchResultItem.key)}
+                isFirstOnPage={index === 0}
+                onToggleSelect={onItemToggleSelect}
+                onOpenDetails={onItemOpenDetails}
+              />
+            )
+          )}
       </div>
       {searchResults.numFound > 0 ? (
         <PaginationComponent

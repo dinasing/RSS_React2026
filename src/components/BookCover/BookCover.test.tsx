@@ -26,4 +26,13 @@ describe('BookCoverComponent', () => {
 
     expect(screen.getByText('📖')).toBeInTheDocument();
   });
+
+  it('loads eagerly when priority is set', () => {
+    renderWithIntl(<BookCoverComponent coverId={1001} priority />);
+
+    expect(screen.getByAltText('Book cover')).toHaveAttribute(
+      'loading',
+      'eager'
+    );
+  });
 });
