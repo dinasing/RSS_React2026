@@ -23,10 +23,7 @@ import {
 } from '../../store/selectedItems/selectedItems.slice';
 import type { SearchResultItemType } from '../../types/searchResultItem.type';
 import type { SearchResultsType } from '../../types/searchResults.type';
-import {
-  buildSelectedItemsCsv,
-  buildSelectedItemsCsvFilename,
-} from '../../util/csv.util';
+import DownloadSelected from '../../components/DownloadSelected/DownloadSelected.component';
 import {
   buildDetailsSearchParams,
   fromDetailsParam,
@@ -99,25 +96,6 @@ const SearchPage = () => {
 
   const handleUnselectAll = () => {
     dispatch(unselectAll());
-  };
-
-  const handleDownloadSelected = () => {
-    if (selectedItemsCount === 0) {
-      return;
-    }
-
-    const csvContent = buildSelectedItemsCsv(selectedItemsList);
-    const fileName = buildSelectedItemsCsvFilename(selectedItemsCount);
-    const csvBlob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const csvUrl = URL.createObjectURL(csvBlob);
-    const downloadLink = document.createElement('a');
-
-    downloadLink.href = csvUrl;
-    downloadLink.download = fileName;
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    document.body.removeChild(downloadLink);
-    URL.revokeObjectURL(csvUrl);
   };
 
   const handleRefresh = () => {
@@ -227,13 +205,7 @@ const SearchPage = () => {
               >
                 {t('unselectAll')}
               </button>
-              <button
-                type="button"
-                className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-200"
-                onClick={handleDownloadSelected}
-              >
-                {t('download')}
-              </button>
+              <DownloadSelected selectedItems={selectedItemsList} />
             </div>
           </div>
         </div>
