@@ -1,13 +1,14 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import type { ComponentProps } from 'react';
 import { ThemeProvider } from '../../context/Theme/Theme.context';
 import { mockBook, mockBookSearch } from '../../test-utils/fixtures';
+import { renderWithIntl } from '../../test-utils/renderWithIntl';
 import SearchResultsComponent from './SearchResults.component';
 
 const renderSearchResults = (
   props: ComponentProps<typeof SearchResultsComponent>
 ) =>
-  render(
+  renderWithIntl(
     <ThemeProvider>
       <SearchResultsComponent {...props} />
     </ThemeProvider>

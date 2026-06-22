@@ -1,3 +1,7 @@
+'use client';
+
+import { useTranslations } from 'next-intl';
+
 type PaginationComponentProps = {
   page: number;
   numFound: number;
@@ -8,6 +12,7 @@ type PaginationComponentProps = {
 
 const PaginationComponent = (props: PaginationComponentProps) => {
   const { page, numFound, onPrevious, onNext, limit } = props;
+  const t = useTranslations('Pagination');
   const totalPages = Math.ceil(numFound / limit);
 
   const renderPreviousButton = () => (
@@ -16,7 +21,7 @@ const PaginationComponent = (props: PaginationComponentProps) => {
       onClick={onPrevious}
       className="bg-blue-500 text-white px-2 py-1 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
     >
-      Prev
+      {t('previous')}
     </button>
   );
 
@@ -26,7 +31,7 @@ const PaginationComponent = (props: PaginationComponentProps) => {
       onClick={onNext}
       className="bg-blue-500 text-white px-2 py-1 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
     >
-      Next
+      {t('next')}
     </button>
   );
 

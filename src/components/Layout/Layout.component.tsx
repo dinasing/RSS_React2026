@@ -1,8 +1,13 @@
-import { Outlet } from 'react-router';
+'use client';
+
 import { THEME_DARK, useTheme } from '../../context/Theme/Theme.shared';
 import Navigation from '../Navigation/Navigation.component';
 
-const Layout = () => {
+type LayoutProps = {
+  children: React.ReactNode;
+};
+
+const Layout = ({ children }: LayoutProps) => {
   const { theme } = useTheme();
   const isDarkTheme = theme === THEME_DARK;
 
@@ -17,9 +22,7 @@ const Layout = () => {
       <header>
         <Navigation />
       </header>
-      <main>
-        <Outlet />
-      </main>
+      <main>{children}</main>
     </div>
   );
 };

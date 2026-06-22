@@ -1,4 +1,7 @@
-import { useSearchParams } from 'react-router';
+'use client';
+
+import { useTranslations } from 'next-intl';
+import { useSearchParamsState } from '../../hooks/useSearchParamsState/useSearchParamsState.hook';
 import { THEME_DARK, useTheme } from '../../context/Theme/Theme.shared';
 import { booksApi, useGetBookDetailsQuery } from '../../store/api/booksApi';
 import { useAppDispatch } from '../../store/hooks';
@@ -14,10 +17,11 @@ type BookDetailsPanelProps = {
 };
 
 const BookDetailsPanelComponent = ({ workKey }: BookDetailsPanelProps) => {
+  const t = useTranslations('BookDetails');
   const dispatch = useAppDispatch();
   const { theme } = useTheme();
   const isDarkTheme = theme === THEME_DARK;
-  const [, setSearchParams] = useSearchParams();
+  const [, setSearchParams] = useSearchParamsState();
   const {
     data: bookDetails,
     isLoading,
@@ -27,10 +31,7 @@ const BookDetailsPanelComponent = ({ workKey }: BookDetailsPanelProps) => {
   } = useGetBookDetailsQuery(workKey);
 
   const showLoader = isLoading || (isFetching && !bookDetails);
-  const errorMessage = getQueryErrorMessage(
-    error,
-    'Cannot load book details. Please try again.'
-  );
+  const errorMessage = getQueryErrorMessage(error, t('loadFailed'));
 
   const closeDetails = () => {
     setSearchParams((current) => buildDetailsSearchParams(current, null), {
@@ -58,18 +59,18 @@ const BookDetailsPanelComponent = ({ workKey }: BookDetailsPanelProps) => {
       <button
         type="button"
         className={`rounded px-2 py-1 text-sm font-medium ${closeButtonClassName}`}
-        aria-label="Refresh details"
+        aria-label={t('refreshAriaLabel')}
         onClick={handleRefresh}
       >
-        Refresh
+        {t('refresh')}
       </button>
       <button
         type="button"
         className={`rounded px-2 py-1 text-sm font-medium ${closeButtonClassName}`}
-        aria-label="Close details"
+        aria-label={t('closeAriaLabel')}
         onClick={closeDetails}
       >
-        Close
+        {t('close')}
       </button>
     </div>
   );
@@ -77,7 +78,7 @@ const BookDetailsPanelComponent = ({ workKey }: BookDetailsPanelProps) => {
   const renderLoader = () =>
     showLoader ? (
       <p className={`mt-8 text-center italic ${mutedTextClassName}`}>
-        Loading book details...
+        {t('loading')}
       </p>
     ) : null;
 
@@ -87,7 +88,7 @@ const BookDetailsPanelComponent = ({ workKey }: BookDetailsPanelProps) => {
   const renderPublishDate = (firstPublishDate?: string) =>
     firstPublishDate ? (
       <p className={`text-sm ${mutedTextClassName}`}>
-        First published: {firstPublishDate}
+        {t('firstPublished', { date: firstPublishDate })}
       </p>
     ) : null;
 
@@ -95,15 +96,13 @@ const BookDetailsPanelComponent = ({ workKey }: BookDetailsPanelProps) => {
     description ? (
       <p className="text-sm leading-relaxed">{description}</p>
     ) : (
-      <p className={`text-sm ${mutedTextClassName}`}>
-        No description available.
-      </p>
+      <p className={`text-sm ${mutedTextClassName}`}>{t('noDescription')}</p>
     );
 
   const renderSubjects = (subjects?: string[]) =>
     subjects && subjects.length > 0 ? (
       <p className={`text-sm ${mutedTextClassName}`}>
-        Subjects: {subjects.slice(0, 8).join(', ')}
+        {t('subjects', { subjects: subjects.slice(0, 8).join(', ') })}
       </p>
     ) : null;
 
@@ -119,6 +118,8 @@ const BookDetailsPanelComponent = ({ workKey }: BookDetailsPanelProps) => {
       <div className="mt-6 flex flex-col gap-4">
         <BookCoverComponent
           coverId={coverId}
+          width={120}
+          height={180}
           imageClassName="h-[180px] w-[120px] self-center rounded object-cover bg-neutral-100"
           placeholderClassName="h-[180px] w-[120px] self-center rounded"
         />
@@ -137,7 +138,7 @@ const BookDetailsPanelComponent = ({ workKey }: BookDetailsPanelProps) => {
   return (
     <section
       className={`relative flex h-full min-h-[320px] flex-col gap-4 rounded-md p-4 ${panelClassName}`}
-      aria-label="Book details"
+      aria-label={t('panelAriaLabel')}
       onClick={(event) => event.stopPropagation()}
     >
       {renderHeaderActions()}

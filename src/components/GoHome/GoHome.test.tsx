@@ -1,10 +1,11 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
+import { renderWithIntl } from '../../test-utils/renderWithIntl';
 import GoHome from './GoHome.component';
 
 describe('GoHome', () => {
   it('renders a link to the home page', () => {
-    render(
+    renderWithIntl(
       <MemoryRouter>
         <GoHome />
       </MemoryRouter>

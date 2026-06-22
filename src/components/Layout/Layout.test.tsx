@@ -1,6 +1,7 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { ThemeProvider } from '../../context/Theme/Theme.context';
+import { renderWithIntl } from '../../test-utils/renderWithIntl';
 import Layout from './Layout.component';
 
 describe('Layout', () => {
@@ -11,7 +12,7 @@ describe('Layout', () => {
   });
 
   it('renders navigation and outlet content', () => {
-    render(
+    renderWithIntl(
       <ThemeProvider>
         <MemoryRouter initialEntries={['/']}>
           <Routes>

@@ -1,3 +1,6 @@
+'use client';
+
+import { useTranslations } from 'next-intl';
 import { trimQuery } from '../../util/trimQuery.util';
 
 type SearchFormComponentProps = {
@@ -9,6 +12,8 @@ const SearchFormComponent = ({
   handleSearch,
   query,
 }: SearchFormComponentProps) => {
+  const t = useTranslations('SearchForm');
+
   const search = (formData: FormData): void => {
     handleSearch(trimQuery(formData.get('query')));
   };
@@ -17,7 +22,7 @@ const SearchFormComponent = ({
     <form name="search-form" action={search} className="flex gap-2">
       <input
         type="text"
-        placeholder="Search for a book"
+        placeholder={t('placeholder')}
         className="bg-white rounded-md p-2"
         name="query"
         defaultValue={query ?? ''}
@@ -26,9 +31,9 @@ const SearchFormComponent = ({
       <button
         type="submit"
         className="bg-white text-neutral-900 rounded-md p-2"
-        aria-label="Search for a book"
+        aria-label={t('submitAriaLabel')}
       >
-        Search
+        {t('submit')}
       </button>
     </form>
   );
