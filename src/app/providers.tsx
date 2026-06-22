@@ -6,6 +6,7 @@ import { LocaleProvider } from '../context/Locale/Locale.context';
 import { useLocaleContext } from '../context/Locale/Locale.shared';
 import { ThemeProvider } from '../context/Theme/Theme.context';
 import LocaleSync from '../components/LocaleSync/LocaleSync.component';
+import { timeZone } from '../i18n/config';
 import { store } from '../store/store';
 
 type ProvidersProps = {
@@ -16,7 +17,11 @@ function IntlProvider({ children }: ProvidersProps) {
   const { locale, messages } = useLocaleContext();
 
   return (
-    <NextIntlClientProvider locale={locale} messages={messages}>
+    <NextIntlClientProvider
+      locale={locale}
+      messages={messages}
+      timeZone={timeZone}
+    >
       <LocaleSync />
       {children}
     </NextIntlClientProvider>
