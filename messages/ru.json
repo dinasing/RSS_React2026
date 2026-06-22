@@ -1,0 +1,64 @@
+{
+  "Navigation": {
+    "home": "Главная",
+    "about": "О проекте",
+    "theme": "Тема: {mode}",
+    "themeDark": "Тёмная",
+    "themeLight": "Светлая"
+  },
+  "LocaleSwitcher": {
+    "label": "Язык",
+    "en": "English",
+    "ru": "Русский"
+  },
+  "Search": {
+    "title": "Поиск книг!",
+    "refresh": "Обновить",
+    "refreshAriaLabel": "Обновить результаты",
+    "searchFailed": "Не удалось выполнить поиск. Попробуйте ещё раз.",
+    "defaultBooksFailed": "Не удалось загрузить книги по умолчанию. Попробуйте ещё раз.",
+    "selectedCount": "Выбрано: {count}",
+    "unselectAll": "Снять выделение",
+    "download": "Скачать"
+  },
+  "SearchForm": {
+    "placeholder": "Найти книгу",
+    "submit": "Искать",
+    "submitAriaLabel": "Найти книгу"
+  },
+  "SearchResults": {
+    "noResults": "Ничего не найдено"
+  },
+  "Pagination": {
+    "previous": "Назад",
+    "next": "Вперёд"
+  },
+  "BookDetails": {
+    "refresh": "Обновить",
+    "close": "Закрыть",
+    "refreshAriaLabel": "Обновить детали",
+    "closeAriaLabel": "Закрыть детали",
+    "panelAriaLabel": "Детали книги",
+    "loading": "Загрузка деталей книги...",
+    "loadFailed": "Не удалось загрузить детали книги. Попробуйте ещё раз.",
+    "firstPublished": "Первое издание: {date}",
+    "noDescription": "Описание недоступно.",
+    "subjects": "Темы: {subjects}"
+  },
+  "BookCover": {
+    "alt": "Обложка книги"
+  },
+  "GoHome": {
+    "link": "Вернуться на главную"
+  },
+  "About": {
+    "title": "О проекте",
+    "description": "Это простое приложение для поиска книг с помощью API <openLibraryLink>Open Library</openLibraryLink>",
+    "author": "Автор: dinasing <githubLink>GitHub</githubLink>",
+    "course": "Приложение создано в рамках <courseLink>курса RSS React 2026</courseLink>"
+  },
+  "NoRoute": {
+    "title": "Страница не найдена",
+    "description": "Запрашиваемая страница не существует."
+  }
+}
