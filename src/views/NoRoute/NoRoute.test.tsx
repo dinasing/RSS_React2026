@@ -1,14 +1,10 @@
-import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
+import { screen } from '@testing-library/react';
+import { renderWithIntl } from '../../test-utils/renderWithIntl';
 import NoRoute from './NoRoute.page';
 
 describe('NoRoutePage', () => {
   it('renders not found message and go home link', () => {
-    render(
-      <MemoryRouter>
-        <NoRoute />
-      </MemoryRouter>
-    );
+    renderWithIntl(<NoRoute />);
 
     expect(
       screen.getByRole('heading', { name: /nothing on this route/i })

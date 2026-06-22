@@ -1,11 +1,12 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import Navigation from '../../components/Navigation/Navigation.component';
+import { renderWithIntl } from '../../test-utils/renderWithIntl';
 import { ThemeProvider } from './Theme.context';
 
 const renderNavigationWithThemeProvider = () =>
-  render(
+  renderWithIntl(
     <ThemeProvider>
       <MemoryRouter>
         <Navigation />

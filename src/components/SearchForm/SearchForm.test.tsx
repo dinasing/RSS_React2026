@@ -1,11 +1,14 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { renderWithIntl } from '../../test-utils/renderWithIntl';
 import SearchFormComponent from './SearchForm.component';
 
 describe('SearchFormComponent', () => {
   it('renders search input and submit button', () => {
     const handleSearch = vi.fn();
-    render(<SearchFormComponent query="" handleSearch={handleSearch} />);
+    renderWithIntl(
+      <SearchFormComponent query="" handleSearch={handleSearch} />
+    );
 
     expect(
       screen.getByPlaceholderText(/search for a book/i)
@@ -17,7 +20,7 @@ describe('SearchFormComponent', () => {
 
   it('shows saved query in the input on mount', () => {
     const handleSearch = vi.fn();
-    render(
+    renderWithIntl(
       <SearchFormComponent query="saved term" handleSearch={handleSearch} />
     );
 
@@ -27,7 +30,9 @@ describe('SearchFormComponent', () => {
   it('updates input when the user types', async () => {
     const user = userEvent.setup();
     const handleSearch = vi.fn();
-    render(<SearchFormComponent query="" handleSearch={handleSearch} />);
+    renderWithIntl(
+      <SearchFormComponent query="" handleSearch={handleSearch} />
+    );
 
     const input = screen.getByPlaceholderText(/search for a book/i);
     await user.type(input, 'react');
@@ -38,7 +43,9 @@ describe('SearchFormComponent', () => {
   it('calls handleSearch with trimmed query on submit', async () => {
     const user = userEvent.setup();
     const handleSearch = vi.fn();
-    render(<SearchFormComponent query="" handleSearch={handleSearch} />);
+    renderWithIntl(
+      <SearchFormComponent query="" handleSearch={handleSearch} />
+    );
 
     await user.type(
       screen.getByPlaceholderText(/search for a book/i),
@@ -55,7 +62,9 @@ describe('SearchFormComponent', () => {
   it('calls handleSearch with empty string for whitespace-only input', async () => {
     const user = userEvent.setup();
     const handleSearch = vi.fn();
-    render(<SearchFormComponent query="" handleSearch={handleSearch} />);
+    renderWithIntl(
+      <SearchFormComponent query="" handleSearch={handleSearch} />
+    );
 
     await user.type(screen.getByPlaceholderText(/search for a book/i), '   ');
     await user.click(
@@ -67,7 +76,9 @@ describe('SearchFormComponent', () => {
 
   it('treats null query as empty default value', () => {
     const handleSearch = vi.fn();
-    render(<SearchFormComponent query={null} handleSearch={handleSearch} />);
+    renderWithIntl(
+      <SearchFormComponent query={null} handleSearch={handleSearch} />
+    );
 
     expect(screen.getByPlaceholderText(/search for a book/i)).toHaveValue('');
   });

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { useSearchParamsState } from '../../hooks/useSearchParamsState/useSearchParamsState.hook';
 import BookDetailsPage from '../BookDetails/BookDetails.page';
 import ErrorBoundaryComponent from '../../components/ErrorBoundary/ErrorBoundary.component';
@@ -46,13 +47,16 @@ const emptySearchResults: SearchResultsType = {
 const QUERY_STORAGE_KEY = 'query';
 
 const SearchPage = () => {
+  const t = useTranslations('Search');
   const dispatch = useAppDispatch();
   const selectedItemsByKey = useAppSelector(selectSelectedItemsByKey);
   const selectedItemsList = useAppSelector(selectSelectedItemsList);
   const selectedItemsCount = useAppSelector(selectSelectedItemsCount);
   const [searchParams, setSearchParams] = useSearchParamsState();
-  const page = parsePageParam(searchParams.get('page'));
-  const selectedWorkKey = fromDetailsParam(searchParams.get('details'));
+  const page = parsePageParam(searchParams?.get('page') ?? null);
+  const selectedWorkKey = fromDetailsParam(
+    searchParams?.get('details') ?? null
+  );
   const hasDetails = selectedWorkKey !== null;
   const [storedQuery, setStoredQuery, removeQuery] = useLocalStorage(
     QUERY_STORAGE_KEY,
@@ -68,9 +72,7 @@ const SearchPage = () => {
   const showLoader = isLoading || (isFetching && !data);
   const errorMessage = getQueryErrorMessage(
     error,
-    query
-      ? 'Search request failed. Please try again.'
-      : 'Cannot load default books. Please try again.'
+    query ? t('searchFailed') : t('defaultBooksFailed')
   );
 
   const openDetails = (workKey: string) => {
@@ -167,14 +169,14 @@ const SearchPage = () => {
   return (
     <section className="flex flex-col gap-6">
       <div className="flex items-center justify-between gap-4">
-        <PageTitleComponent title="Book search!" />
+        <PageTitleComponent title={t('title')} />
         <button
           type="button"
           className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold hover:bg-slate-100"
-          aria-label="Refresh results"
+          aria-label={t('refreshAriaLabel')}
           onClick={handleRefresh}
         >
-          Refresh
+          {t('refresh')}
         </button>
       </div>
       <div
@@ -214,21 +216,23 @@ const SearchPage = () => {
       {selectedItemsCount > 0 ? (
         <div className="fixed inset-x-0 bottom-4 z-20 px-4">
           <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 rounded-md bg-slate-900 px-4 py-3 text-white shadow-lg">
-            <p className="font-semibold">{selectedItemsCount} selected</p>
+            <p className="font-semibold">
+              {t('selectedCount', { count: selectedItemsCount })}
+            </p>
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 className="rounded-md border border-white px-3 py-2 text-sm font-semibold hover:bg-slate-700"
                 onClick={handleUnselectAll}
               >
-                Unselect all
+                {t('unselectAll')}
               </button>
               <button
                 type="button"
                 className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-200"
                 onClick={handleDownloadSelected}
               >
-                Download
+                {t('download')}
               </button>
             </div>
           </div>

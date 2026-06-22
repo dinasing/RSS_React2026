@@ -1,3 +1,6 @@
+'use client';
+
+import { useTranslations } from 'next-intl';
 import type { SearchResultItemType } from '../../types/searchResultItem.type';
 import type { SearchResultsType } from '../../types/searchResults.type';
 import PaginationComponent from '../Pagination/Pagination.component';
@@ -21,33 +24,37 @@ const SearchResultsComponent = ({
   onItemOpenDetails,
   onPrevious,
   onNext,
-}: SearchResultsComponentProps) => (
-  <section className="border-t-2 border-white py-6">
-    {searchResults.numFound === 0 && (
-      <p className="text-white font-bold">No results found</p>
-    )}
-    <div className="flex flex-col gap-4 md:flex-row md:flex-wrap">
-      {searchResults.docs &&
-        searchResults.docs.map((searchResultItem: SearchResultItemType) => (
-          <SearchResultItemComponent
-            key={searchResultItem.key}
-            searchResultItem={searchResultItem}
-            isSelected={isItemSelected(searchResultItem.key)}
-            onToggleSelect={onItemToggleSelect}
-            onOpenDetails={onItemOpenDetails}
-          />
-        ))}
-    </div>
-    {searchResults.numFound > 0 ? (
-      <PaginationComponent
-        page={page}
-        numFound={searchResults.numFound}
-        limit={10}
-        onPrevious={onPrevious}
-        onNext={onNext}
-      />
-    ) : null}
-  </section>
-);
+}: SearchResultsComponentProps) => {
+  const t = useTranslations('SearchResults');
+
+  return (
+    <section className="border-t-2 border-white py-6">
+      {searchResults.numFound === 0 && (
+        <p className="text-white font-bold">{t('noResults')}</p>
+      )}
+      <div className="flex flex-col gap-4 md:flex-row md:flex-wrap">
+        {searchResults.docs &&
+          searchResults.docs.map((searchResultItem: SearchResultItemType) => (
+            <SearchResultItemComponent
+              key={searchResultItem.key}
+              searchResultItem={searchResultItem}
+              isSelected={isItemSelected(searchResultItem.key)}
+              onToggleSelect={onItemToggleSelect}
+              onOpenDetails={onItemOpenDetails}
+            />
+          ))}
+      </div>
+      {searchResults.numFound > 0 ? (
+        <PaginationComponent
+          page={page}
+          numFound={searchResults.numFound}
+          limit={10}
+          onPrevious={onPrevious}
+          onNext={onNext}
+        />
+      ) : null}
+    </section>
+  );
+};
 
 export default SearchResultsComponent;

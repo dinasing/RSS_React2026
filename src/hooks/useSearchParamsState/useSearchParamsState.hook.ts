@@ -19,10 +19,11 @@ export const useSearchParamsState = () => {
         | ((current: URLSearchParams) => URLSearchParams),
       options?: SetSearchParamsOptions
     ) => {
-      const current = new URLSearchParams(searchParams.toString());
+      const current = new URLSearchParams(searchParams?.toString() ?? '');
       const next = typeof updater === 'function' ? updater(current) : updater;
       const query = next.toString();
-      const url = query ? `${pathname}?${query}` : pathname;
+      const basePath = pathname ?? '/';
+      const url = query ? `${basePath}?${query}` : basePath;
 
       if (options?.replace) {
         router.replace(url);

@@ -6,7 +6,7 @@ import { fromDetailsParam } from '../../util/detailsSearchParam.util';
 
 const BookDetailsPage = () => {
   const [searchParams] = useSearchParamsState();
-  const workKey = fromDetailsParam(searchParams.get('details'));
+  const workKey = fromDetailsParam(searchParams?.get('details') ?? null);
 
   if (!workKey) {
     return null;

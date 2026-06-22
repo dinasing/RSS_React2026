@@ -1,4 +1,7 @@
+'use client';
+
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { getBookCoverUrl } from '../../util/bookCover.util';
 
 type BookCoverProps = {
@@ -12,6 +15,7 @@ const BookCoverComponent = ({
   imageClassName = 'w-[80px] h-[120px] rounded shrink-0 object-cover bg-neutral-100',
   placeholderClassName = 'w-[80px] h-[120px] rounded shrink-0',
 }: BookCoverProps) => {
+  const t = useTranslations('BookCover');
   const [failedCoverId, setFailedCoverId] = useState<number | null>(null);
   const coverLoadFailed = coverId != null && failedCoverId === coverId;
 
@@ -28,7 +32,7 @@ const BookCoverComponent = ({
   return (
     <img
       src={getBookCoverUrl(coverId)}
-      alt="Book cover"
+      alt={t('alt')}
       className={imageClassName}
       onError={() => setFailedCoverId(coverId)}
     />

@@ -1,9 +1,10 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
+import { renderWithIntl } from '../../test-utils/renderWithIntl';
 import PaginationComponent from './Pagination.component';
 
 describe('PaginationComponent', () => {
   it('renders the previous, page number, and next buttons', () => {
-    render(
+    renderWithIntl(
       <PaginationComponent
         page={1}
         numFound={100}
@@ -18,7 +19,7 @@ describe('PaginationComponent', () => {
   });
 
   it('disables the previous button on the first page', () => {
-    render(
+    renderWithIntl(
       <PaginationComponent
         page={1}
         numFound={100}
@@ -31,7 +32,7 @@ describe('PaginationComponent', () => {
   });
 
   it('disables the next button on the last page', () => {
-    render(
+    renderWithIntl(
       <PaginationComponent
         page={10}
         numFound={100}

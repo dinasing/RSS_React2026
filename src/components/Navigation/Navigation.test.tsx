@@ -1,6 +1,7 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { ThemeProvider } from '../../context/Theme/Theme.context';
+import { renderWithIntl } from '../../test-utils/renderWithIntl';
 import Navigation from './Navigation.component';
 
 describe('Navigation', () => {
@@ -11,7 +12,7 @@ describe('Navigation', () => {
   });
 
   it('renders home and about links', () => {
-    render(
+    renderWithIntl(
       <ThemeProvider>
         <MemoryRouter>
           <Navigation />
@@ -29,6 +30,9 @@ describe('Navigation', () => {
     );
     expect(
       screen.getByRole('button', { name: /theme: light/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('combobox', { name: /language/i })
     ).toBeInTheDocument();
   });
 });

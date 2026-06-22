@@ -2,10 +2,8 @@
 
 import { NextIntlClientProvider } from 'next-intl';
 import { Provider } from 'react-redux';
-import {
-  LocaleProvider,
-  useLocaleContext,
-} from '../context/Locale/Locale.context';
+import { LocaleProvider } from '../context/Locale/Locale.context';
+import { useLocaleContext } from '../context/Locale/Locale.shared';
 import { ThemeProvider } from '../context/Theme/Theme.context';
 import LocaleSync from '../components/LocaleSync/LocaleSync.component';
 import { store } from '../store/store';

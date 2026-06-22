@@ -2,10 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { THEME_DARK, useTheme } from '../../context/Theme/Theme.shared';
+import LocaleSwitcher from '../LocaleSwitcher/LocaleSwitcher.component';
 
 const Navigation = () => {
   const pathname = usePathname();
+  const t = useTranslations('Navigation');
   const { theme, toggleTheme } = useTheme();
   const isDarkTheme = theme === THEME_DARK;
   const navLinkClassName = isDarkTheme
@@ -20,26 +23,31 @@ const Navigation = () => {
       <ul className="flex gap-2">
         <li>
           <Link className={getLinkClassName('/')} href="/">
-            Home
+            {t('home')}
           </Link>
         </li>
         <li>
           <Link className={getLinkClassName('/about')} href="/about">
-            About
+            {t('about')}
           </Link>
         </li>
       </ul>
-      <button
-        type="button"
-        className={`rounded-md px-3 py-2 text-sm font-semibold ${
-          isDarkTheme
-            ? 'border border-white text-white hover:bg-slate-700'
-            : 'border border-slate-300 bg-white text-slate-900 hover:bg-slate-100'
-        }`}
-        onClick={toggleTheme}
-      >
-        Theme: {isDarkTheme ? 'Dark' : 'Light'}
-      </button>
+      <div className="flex items-center gap-2">
+        <LocaleSwitcher />
+        <button
+          type="button"
+          className={`rounded-md px-3 py-2 text-sm font-semibold ${
+            isDarkTheme
+              ? 'border border-white text-white hover:bg-slate-700'
+              : 'border border-slate-300 bg-white text-slate-900 hover:bg-slate-100'
+          }`}
+          onClick={toggleTheme}
+        >
+          {t('theme', {
+            mode: isDarkTheme ? t('themeDark') : t('themeLight'),
+          })}
+        </button>
+      </div>
     </nav>
   );
 };
