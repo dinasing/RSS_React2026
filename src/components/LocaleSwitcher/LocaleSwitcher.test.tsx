@@ -15,14 +15,17 @@ describe('LocaleSwitcher', () => {
       </Providers>
     );
 
-    const select = screen.getByRole('combobox', { name: /language/i });
-    expect(select).toHaveValue('en');
     expect(
-      screen.getByRole('option', { name: /english/i })
+      screen.getByRole('radiogroup', { name: /language/i })
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole('option', { name: /русский/i })
-    ).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /english/i })).toHaveAttribute(
+      'aria-checked',
+      'true'
+    );
+    expect(screen.getByRole('radio', { name: /русский/i })).toHaveAttribute(
+      'aria-checked',
+      'false'
+    );
   });
 
   it('persists selected locale to localStorage', async () => {
@@ -33,10 +36,7 @@ describe('LocaleSwitcher', () => {
       </Providers>
     );
 
-    await user.selectOptions(
-      screen.getByRole('combobox', { name: /language/i }),
-      'ru'
-    );
+    await user.click(screen.getByRole('radio', { name: /русский/i }));
 
     expect(localStorage.getItem('locale')).toBe('ru');
   });

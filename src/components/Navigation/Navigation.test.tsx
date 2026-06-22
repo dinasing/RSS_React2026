@@ -32,7 +32,7 @@ describe('Navigation', () => {
       screen.getByRole('button', { name: /theme: light/i })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('combobox', { name: /language/i })
+      screen.getByRole('radiogroup', { name: /language/i })
     ).toBeInTheDocument();
   });
 });
