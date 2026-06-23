@@ -1,0 +1,64 @@
+{
+  "Navigation": {
+    "home": "Home",
+    "about": "About",
+    "theme": "Theme: {mode}",
+    "themeDark": "Dark",
+    "themeLight": "Light"
+  },
+  "LocaleSwitcher": {
+    "label": "Language",
+    "en": "English",
+    "ru": "Русский"
+  },
+  "Search": {
+    "title": "Book search!",
+    "refresh": "Refresh",
+    "refreshAriaLabel": "Refresh results",
+    "searchFailed": "Search request failed. Please try again.",
+    "defaultBooksFailed": "Cannot load default books. Please try again.",
+    "selectedCount": "{count} selected",
+    "unselectAll": "Unselect all",
+    "download": "Download"
+  },
+  "SearchForm": {
+    "placeholder": "Search for a book",
+    "submit": "Search",
+    "submitAriaLabel": "Search for a book"
+  },
+  "SearchResults": {
+    "noResults": "No results found"
+  },
+  "Pagination": {
+    "previous": "Prev",
+    "next": "Next"
+  },
+  "BookDetails": {
+    "refresh": "Refresh",
+    "close": "Close",
+    "refreshAriaLabel": "Refresh details",
+    "closeAriaLabel": "Close details",
+    "panelAriaLabel": "Book details",
+    "loading": "Loading book details...",
+    "loadFailed": "Cannot load book details. Please try again.",
+    "firstPublished": "First published: {date}",
+    "noDescription": "No description available.",
+    "subjects": "Subjects: {subjects}"
+  },
+  "BookCover": {
+    "alt": "Book cover"
+  },
+  "GoHome": {
+    "link": "Go back to the home page"
+  },
+  "About": {
+    "title": "About page",
+    "description": "This is a simple app that allows you to search for books using the <openLibraryLink>Open Library</openLibraryLink> API",
+    "author": "Author: dinasing <githubLink>GitHub</githubLink>",
+    "course": "This app was implemented as part of the <courseLink>RSS React 2026 course</courseLink>"
+  },
+  "NoRoute": {
+    "title": "Nothing on this route",
+    "description": "The page you are looking for does not exist."
+  }
+}
